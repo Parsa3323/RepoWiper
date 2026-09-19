@@ -140,7 +140,10 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center">
-                <h1 className="text-xl font-bold text-foreground">GitHub Repository Wiper</h1>
+                <div>
+                  <p className="text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Repository management</p>
+                  <p className="mt-1 text-sm text-foreground">By Rabity</p>
+                </div>
               </div>
               
               <div className="flex items-center gap-4">
@@ -170,6 +173,8 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 startContent={<Search className="h-4 w-4 text-foreground-500" />}
+                size="sm"
+                classNames={{ inputWrapper: 'h-10 min-h-10' }}
                 className="w-full"
               />
             </div>
@@ -181,6 +186,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                 onChange={(e) => setSortBy(e.target.value as 'updated' | 'created' | 'name')}
                 className="w-40"
                 size="sm"
+                classNames={{ trigger: 'h-10 min-h-10', label: 'text-xs' }}
               >
                 <SelectItem key="updated" value="updated">Last updated</SelectItem>
                 <SelectItem key="created" value="created">Created date</SelectItem>
