@@ -282,7 +282,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                     disabled={isLoading || paginatedRepositories.length === 0}
                   />
                 </div>
-                <div className="flex-1 grid grid-cols-1 gap-y-3 gap-x-6 sm:grid-cols-[minmax(0,1fr)_minmax(8rem,auto)_minmax(6rem,auto)_2.25rem]">
+                <div className="flex-1 grid grid-cols-1 gap-y-3 gap-x-8 pr-8 sm:grid-cols-[minmax(0,1fr)_12rem_9rem_2.25rem]">
                   <div className="text-sm font-medium text-foreground">Repository</div>
                   <div className="hidden sm:block text-sm font-medium text-foreground">Last Updated</div>
                   <div className="hidden sm:block text-sm font-medium text-foreground">Visibility</div>
@@ -321,7 +321,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                           onChange={() => toggleRepositorySelection(repo.name)}
                         />
                       </div>
-                      <div className="flex-1 grid grid-cols-1 gap-y-3 gap-x-6 sm:grid-cols-[minmax(0,1fr)_minmax(8rem,auto)_minmax(6rem,auto)_2.25rem]">
+                      <div className="flex-1 grid grid-cols-1 gap-y-3 gap-x-8 pr-8 sm:grid-cols-[minmax(0,1fr)_12rem_9rem_2.25rem]">
                         <div>
                           <a 
                             href={repo.html_url} 
