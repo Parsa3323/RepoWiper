@@ -1,12 +1,11 @@
-import { clearStateCookie, encryptSession, parseCookies, sessionCookie, statesMatch, verifyState } from '../_lib/auth.js';
+import { clearStateCookie, encryptSession, sessionCookie, verifyState } from '../_lib/auth.js';
 import { ApiRequest, ApiResponse } from '../types.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   const { code, state, error } = req.query;
-  const cookies = parseCookies(req.headers.cookie);
   if (error) return res.redirect('/?auth_error=cancelled');
   const [oauthState, signature] = typeof state === 'string' ? state.split('.') : [];
-  if (!oauthState || !signature || !statesMatch(cookies.repo_wiper_oauth_state, oauthState) || !verifyState(oauthState, signature)) return res.status(400).send('Invalid OAuth state');
+  if (!oauthState || !signature || !verifyState(oauthState, signature)) return res.status(400).send('Invalid OAuth state');
   if (!oauthState) return res.status(400).send('Invalid OAuth state');
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
