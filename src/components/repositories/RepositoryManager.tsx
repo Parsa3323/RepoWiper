@@ -3,15 +3,15 @@ import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRigh
 import { toast } from '../ui/useToast';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { Button } from '../ui/Button';
-import { Repository, fetchUserRepositories, deleteRepository } from '../../services/githubService';
+import { Repository, fetchUserRepositories, deleteRepository, User } from '../../services/githubService';
 import { Select, SelectItem, Input } from '@nextui-org/react';
 
 interface RepositoryManagerProps {
-  token: string;
+  user: User;
   onLogout: () => void;
 }
 
-const RepositoryManager: React.FC<RepositoryManagerProps> = ({ token, onLogout }) => {
+const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout }) => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [filteredRepositories, setFilteredRepositories] = useState<Repository[]>([]);
   const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
@@ -24,17 +24,14 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ token, onLogout }
   const [pageSize] = useState(10);
   const [sortBy, setSortBy] = useState<'updated' | 'name' | 'created'>('updated');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [userName, setUserName] = useState<string>('');
 
   const fetchRepositories = async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const [repos, user] = await fetchUserRepositories(token);
-      
-      setRepositories(repos);
-      setUserName(user.login);
+      const result = await fetchUserRepositories();
+      setRepositories(result.repositories);
       
       setSelectedRepos([]);
     } catch (err) {
@@ -51,7 +48,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ token, onLogout }
 
   useEffect(() => {
     fetchRepositories();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     const filtered = repositories.filter((repo) => 
@@ -96,7 +93,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ token, onLogout }
       
       const results = await Promise.allSettled(
         selectedRepos.map((repoName) => 
-          deleteRepository(token, userName, repoName)
+          deleteRepository(user.login, repoName)
         )
       );
       
@@ -148,9 +145,9 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ token, onLogout }
               </div>
               
               <div className="flex items-center gap-4">
-                {userName && (
+                {user.login && (
                   <span className="text-sm text-foreground-500">
-                    Signed in as <span className="font-medium">{userName}</span>
+                    Signed in as <span className="font-medium">{user.login}</span>
                   </span>
                 )}
                 <Button
@@ -182,7 +179,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ token, onLogout }
               <Select
                 label="Sort by"
                 selectedKeys={[sortBy]}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as 'updated' | 'created' | 'name')}
                 className="w-48"
                 size="sm"
               >

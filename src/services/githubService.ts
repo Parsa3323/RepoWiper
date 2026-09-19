@@ -5,10 +5,7 @@ export interface Repository {
   description: string | null;
   html_url: string;
   visibility: string;
-  owner: {
-    login: string;
-    avatar_url: string;
-  };
+  owner: { login: string; avatar_url: string };
   created_at: string;
   updated_at: string;
   pushed_at: string;
@@ -22,65 +19,23 @@ export interface User {
   html_url: string;
 }
 
-export const fetchUserRepositories = async (token: string): Promise<[Repository[], User]> => {
-  try {
-    const userResponse = await fetch('https://api.github.com/user', {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-    });
+interface SessionResponse { authenticated: boolean; user: User | null }
 
-    if (!userResponse.ok) {
-      throw new Error(`Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`);
-    }
-
-    const userData: User = await userResponse.json();
-
-    const reposResponse = await fetch('https://api.github.com/user/repos?per_page=100', {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-    });
-
-    if (!reposResponse.ok) {
-      throw new Error(`Failed to fetch repositories: ${reposResponse.status} ${reposResponse.statusText}`);
-    }
-
-    const reposData: Repository[] = await reposResponse.json();
-
-    return [reposData, userData];
-  } catch (error) {
-    console.error('Error fetching repositories:', error);
-    throw error;
+const request = async <T>(path: string, options?: RequestInit): Promise<T> => {
+  const response = await fetch(path, {
+    ...options,
+    headers: { Accept: 'application/json', ...options?.headers },
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(body?.error ?? `Request failed with status ${response.status}`);
   }
+  if (response.status === 204) return undefined as T;
+  return response.json() as Promise<T>;
 };
 
-export const deleteRepository = async (
-  token: string,
-  owner: string,
-  repo: string
-): Promise<void> => {
-  try {
-    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Failed to delete repository: ${response.status} ${response.statusText}${
-          errorData.message ? ` - ${errorData.message}` : ''
-        }`
-      );
-    }
-  } catch (error) {
-    console.error(`Error deleting repository ${owner}/${repo}:`, error);
-    throw error;
-  }
-};
+export const getSession = (): Promise<SessionResponse> => request('/api/auth/session');
+export const logout = (): Promise<void> => request('/api/auth/logout', { method: 'POST' });
+export const fetchUserRepositories = (): Promise<{ repositories: Repository[]; user: User }> => request('/api/github/repositories');
+export const deleteRepository = (owner: string, repo: string): Promise<void> =>
+  request(`/api/github/repositories/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, { method: 'DELETE' });

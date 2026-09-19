@@ -1,12 +1,23 @@
 import React from 'react';
 import { Button as NextUIButton } from '@nextui-org/react';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onFocus' | 'onBlur'> {
   variant?: 'primary' | 'secondary' | 'danger';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
 }
+
+type RenderButtonProps = Omit<ButtonProps, 'variant'> & {
+  color?: string;
+  variant?: string;
+  isLoading?: boolean;
+  isDisabled?: boolean;
+  startContent?: React.ReactNode;
+  endContent?: React.ReactNode;
+};
+
+const RenderButton = NextUIButton as unknown as React.ComponentType<RenderButtonProps>;
 
 const Button: React.FC<ButtonProps> = ({
   children,
@@ -32,7 +43,7 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   return (
-    <NextUIButton
+    <RenderButton
       {...getVariantProps()}
       isLoading={isLoading}
       isDisabled={disabled}
@@ -42,7 +53,7 @@ const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {children}
-    </NextUIButton>
+    </RenderButton>
   );
 };
 
