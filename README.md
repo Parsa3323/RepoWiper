@@ -80,7 +80,3 @@ vercel dev
 5. Redeploy after saving the variables.
 
 The OAuth scope includes `read:user`, `repo`, and `delete_repo` so RepoWiper can identify the user, list private repositories, and delete repositories. Deletion is permanent, so test with a disposable repository first.
-
-## GitHub Developer Program
-
-RepoWiper qualifies as a GitHub API integration project. The GitHub Developer Program is separate from OAuth authentication. You can apply through the [GitHub Developer Program documentation](https://docs.github.com/en/integrations/concepts/github-developer-program). GitHub describes the program as open to individual developers and companies with an integration in development or production and a support contact email.
