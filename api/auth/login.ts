@@ -1,5 +1,5 @@
-import { createState, signState, stateCookie } from '../_lib/auth';
-import { ApiRequest, ApiResponse } from '../types';
+import { createState, signState, stateCookie } from '../_lib/auth.js';
+import { ApiRequest, ApiResponse } from '../types.js';
 
 export default function handler(_req: ApiRequest, res: ApiResponse) {
   const clientId = process.env.GITHUB_CLIENT_ID;

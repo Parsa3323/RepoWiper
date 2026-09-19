@@ -1,5 +1,5 @@
-import { clearStateCookie, encryptSession, parseCookies, sessionCookie, statesMatch, verifyState } from '../_lib/auth';
-import { ApiRequest, ApiResponse } from '../types';
+import { clearStateCookie, encryptSession, parseCookies, sessionCookie, statesMatch, verifyState } from '../_lib/auth.js';
+import { ApiRequest, ApiResponse } from '../types.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   const { code, state, error } = req.query;

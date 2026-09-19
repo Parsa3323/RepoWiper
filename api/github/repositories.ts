@@ -1,5 +1,5 @@
-import { githubRequest, requireSession } from '../_lib/auth';
-import { ApiRequest, ApiResponse } from '../types';
+import { githubRequest, requireSession } from '../_lib/auth.js';
+import { ApiRequest, ApiResponse } from '../types.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });

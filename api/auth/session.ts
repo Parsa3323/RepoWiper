@@ -1,5 +1,5 @@
-import { getSession } from '../_lib/auth';
-import { ApiRequest, ApiResponse } from '../types';
+import { getSession } from '../_lib/auth.js';
+import { ApiRequest, ApiResponse } from '../types.js';
 
 export default function handler(req: ApiRequest, res: ApiResponse) {
   const session = getSession(req);

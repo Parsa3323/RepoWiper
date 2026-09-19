@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { ApiRequest, ApiResponse } from '../types';
+import { ApiRequest, ApiResponse } from '../types.js';
 
 export interface GithubUser { login: string; id: number; avatar_url: string; html_url: string }
 interface Session { accessToken: string; user: GithubUser }
