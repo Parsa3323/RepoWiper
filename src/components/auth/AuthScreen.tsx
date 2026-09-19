@@ -7,7 +7,7 @@ const AuthScreen: React.FC = () => (
     <div className="auth-layout mx-auto w-full max-w-6xl">
       <section className="max-w-xl">
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Repository management</p>
-        <h1 className="text-4xl font-bold leading-tight text-white sm:text-5xl">GitHub Repository Wiper</h1>
+        <h1 className="text-5xl font-bold leading-tight text-white sm:text-7xl">By Rabity</h1>
         <p className="mt-5 text-lg leading-8 text-gray-400">Safely manage and permanently delete GitHub repositories from one place.</p>
         <p className="mt-4 text-sm text-gray-500">Repository deletion cannot be undone.</p>
       </section>

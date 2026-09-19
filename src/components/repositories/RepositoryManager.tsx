@@ -4,7 +4,7 @@ import { toast } from '../ui/useToast';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { Button } from '../ui/Button';
 import { Repository, fetchUserRepositories, deleteRepository, User } from '../../services/githubService';
-import { Select, SelectItem, Input } from '@nextui-org/react';
+import { Select, SelectItem, Input, Spinner } from '@nextui-org/react';
 
 interface RepositoryManagerProps {
   user: User;
@@ -142,7 +142,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
               <div className="flex items-center">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Repository management</p>
-                  <p className="mt-1 text-sm text-foreground">By Rabity</p>
+                  <p className="mt-1 text-xl font-semibold text-foreground">By Rabity</p>
                 </div>
               </div>
               
@@ -243,7 +243,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                 <div className="flex items-center mr-4">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 text-primary border-default-200 rounded"
+                    className="h-4 w-4 cursor-pointer rounded border-gray-500 accent-[#64748b] focus:ring-2 focus:ring-[#64748b]/40"
                     checked={selectedRepos.length === paginatedRepositories.length && paginatedRepositories.length > 0}
                     onChange={toggleSelectAll}
                     disabled={isLoading || paginatedRepositories.length === 0}
@@ -259,7 +259,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
 
             {isLoading && (
               <div className="px-6 py-12 text-center">
-                <RefreshCw className="h-8 w-8 text-primary animate-spin mx-auto mb-4" />
+                <Spinner color="default" size="lg" className="mx-auto mb-4" />
                 <p className="text-foreground-500">Loading repositories...</p>
               </div>
             )}
@@ -282,7 +282,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                       <div className="flex items-center mr-4">
                         <input
                           type="checkbox"
-                          className="h-4 w-4 text-primary border-default-200 rounded"
+                          className="h-4 w-4 cursor-pointer rounded border-gray-500 accent-[#64748b] focus:ring-2 focus:ring-[#64748b]/40"
                           checked={selectedRepos.includes(repo.name)}
                           onChange={() => toggleRepositorySelection(repo.name)}
                         />
