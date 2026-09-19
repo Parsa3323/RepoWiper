@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, RefreshCw, Settings2, X } from 'lucide-react';
 import { toast } from '../ui/useToast';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { Button } from '../ui/Button';
-import { Repository, fetchUserRepositories, deleteRepository, User } from '../../services/githubService';
+import { Repository, fetchUserRepositories, deleteRepository, updateRepository, User } from '../../services/githubService';
 import { Select, SelectItem, Input, Spinner } from '@nextui-org/react';
 
 interface RepositoryManagerProps {
@@ -24,6 +24,10 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
   const [pageSize] = useState(10);
   const [sortBy, setSortBy] = useState<'updated' | 'name' | 'created'>('updated');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [managedRepository, setManagedRepository] = useState<Repository | null>(null);
+  const [managedName, setManagedName] = useState('');
+  const [managedVisibility, setManagedVisibility] = useState<'public' | 'private'>('public');
+  const [isSavingRepository, setIsSavingRepository] = useState(false);
 
   const fetchRepositories = async () => {
     try {
@@ -49,6 +53,35 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
   useEffect(() => {
     fetchRepositories();
   }, []);
+
+  const openRepositoryManager = (repository: Repository) => {
+    setManagedRepository(repository);
+    setManagedName(repository.name);
+    setManagedVisibility(repository.visibility === 'private' ? 'private' : 'public');
+  };
+
+  const closeRepositoryManager = () => {
+    if (!isSavingRepository) setManagedRepository(null);
+  };
+
+  const saveRepositoryChanges = async () => {
+    if (!managedRepository || !managedName.trim()) return;
+    try {
+      setIsSavingRepository(true);
+      const updated = await updateRepository(user.login, managedRepository.name, {
+        name: managedName.trim(),
+        visibility: managedVisibility,
+      });
+      setRepositories((current) => current.map((repository) => repository.id === updated.id ? updated : repository));
+      setSelectedRepos((current) => current.map((name) => name === managedRepository.name ? updated.name : name));
+      setManagedRepository(null);
+      toast({ title: 'Repository updated', description: `${updated.name} was updated successfully.` });
+    } catch (err) {
+      toast({ title: 'Could not update repository', description: err instanceof Error ? err.message : 'The repository could not be updated.', variant: 'destructive' });
+    } finally {
+      setIsSavingRepository(false);
+    }
+  };
 
   useEffect(() => {
     const filtered = repositories.filter((repo) => 
@@ -249,10 +282,11 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                     disabled={isLoading || paginatedRepositories.length === 0}
                   />
                 </div>
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div className="text-sm font-medium text-foreground">Repository</div>
                   <div className="hidden sm:block text-sm font-medium text-foreground">Last Updated</div>
                   <div className="hidden sm:block text-sm font-medium text-foreground">Visibility</div>
+                  <div className="hidden sm:block text-sm font-medium text-foreground">Manage</div>
                 </div>
               </div>
             </div>
@@ -287,7 +321,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                           onChange={() => toggleRepositorySelection(repo.name)}
                         />
                       </div>
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-4">
                         <div>
                           <a 
                             href={repo.html_url} 
@@ -312,13 +346,18 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                           {new Date(repo.updated_at).toLocaleDateString()}
                         </div>
                         <div className="hidden sm:block">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
                             repo.visibility === 'public'
-                              ? 'bg-success/20 text-success-500'
-                              : 'bg-warning/20 text-warning-500'
+                              ? 'border-success text-success-500'
+                              : 'border-warning text-warning-500'
                           }`}>
                             {repo.visibility}
                           </span>
+                        </div>
+                        <div className="hidden items-center sm:flex">
+                          <Button variant="secondary" onClick={() => openRepositoryManager(repo)} leftIcon={<Settings2 className="h-4 w-4" />}>
+                            Manage
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -358,6 +397,42 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
           </div>
         </footer>
       </div>
+
+      {managedRepository && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={closeRepositoryManager} />
+          <div className="relative z-10 w-full max-w-md rounded-lg bg-content1 p-6 shadow-xl">
+            <button type="button" aria-label="Close manage repository dialog" onClick={closeRepositoryManager} className="absolute right-4 top-4 text-foreground-500 hover:text-foreground">
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="text-lg font-semibold text-foreground">Manage repository</h2>
+            <p className="mt-1 text-sm text-foreground-500">Update the repository name or visibility.</p>
+            <label className="mt-5 block text-sm font-medium text-foreground" htmlFor="repository-name">Name</label>
+            <input
+              id="repository-name"
+              value={managedName}
+              onChange={(event) => setManagedName(event.target.value)}
+              disabled={isSavingRepository}
+              className="mt-2 w-full rounded-md border border-default-200 bg-content2 px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+            />
+            <label className="mt-4 block text-sm font-medium text-foreground" htmlFor="repository-visibility">Visibility</label>
+            <select
+              id="repository-visibility"
+              value={managedVisibility}
+              onChange={(event) => setManagedVisibility(event.target.value as 'public' | 'private')}
+              disabled={isSavingRepository}
+              className="mt-2 w-full rounded-md border border-default-200 bg-content2 px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+            >
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+            </select>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="secondary" onClick={closeRepositoryManager} disabled={isSavingRepository}>Cancel</Button>
+              <Button onClick={saveRepositoryChanges} isLoading={isSavingRepository}>Save changes</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmationModal
         isOpen={showConfirmation}

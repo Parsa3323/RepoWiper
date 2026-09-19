@@ -2,6 +2,7 @@ export interface ApiRequest {
   method?: string;
   headers: { cookie?: string };
   query: Record<string, string | string[] | undefined>;
+  body?: unknown;
 }
 
 export interface ApiResponse {

@@ -39,3 +39,10 @@ export const logout = (): Promise<void> => request('/api/auth/logout', { method:
 export const fetchUserRepositories = (): Promise<{ repositories: Repository[]; user: User }> => request('/api/github/repositories');
 export const deleteRepository = (owner: string, repo: string): Promise<void> =>
   request(`/api/github/repositories/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, { method: 'DELETE' });
+
+export const updateRepository = (owner: string, repo: string, changes: { name: string; visibility: 'public' | 'private' }): Promise<Repository> =>
+  request(`/api/github/repositories/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(changes),
+  });

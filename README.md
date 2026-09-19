@@ -26,7 +26,7 @@ The application includes:
 
 ## Local setup
 
-Create a GitHub OAuth App in **GitHub Settings → Developer settings → OAuth Apps → New OAuth App**. For local testing, use this callback URL:
+Create a GitHub OAuth App from **GitHub Settings**, then open **Developer settings**, **OAuth Apps**, and **New OAuth App**. For local testing, use this callback URL:
 
 ```text
 http://localhost:3000/api/auth/callback
@@ -67,7 +67,7 @@ vercel dev
    https://your-project.vercel.app/api/auth/callback
    ```
 
-4. Add these Production environment variables in **Vercel → Project → Settings → Environment Variables**:
+4. Add these Production environment variables in **Vercel Project Settings, under Environment Variables**:
 
    ```env
    GITHUB_CLIENT_ID=your_github_oauth_client_id
