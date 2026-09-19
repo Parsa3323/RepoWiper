@@ -140,7 +140,6 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center">
-                <Github className="h-6 w-6 text-primary mr-2" />
                 <h1 className="text-xl font-bold text-foreground">GitHub Repository Wiper</h1>
               </div>
               
