@@ -175,7 +175,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
               <div className="flex items-center">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Repository management</p>
-                  <p className="mt-1 text-xl font-semibold text-foreground">By Rabity</p>
+                  <p className="mt-1 text-xl font-bold text-foreground">By Rabity</p>
                 </div>
               </div>
               
@@ -355,8 +355,14 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                           </span>
                         </div>
                         <div className="hidden items-center sm:flex">
-                          <Button variant="secondary" onClick={() => openRepositoryManager(repo)} leftIcon={<Settings2 className="h-4 w-4" />}>
-                            Manage
+                          <Button
+                            variant="secondary"
+                            onClick={() => openRepositoryManager(repo)}
+                            aria-label={`Manage ${repo.name}`}
+                            title={`Manage ${repo.name}`}
+                            className="h-9 min-w-9 w-9 px-0"
+                          >
+                            <Settings2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
@@ -401,7 +407,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
       {managedRepository && (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={closeRepositoryManager} />
-          <div className="relative z-10 w-full max-w-md rounded-lg bg-content1 p-6 shadow-xl">
+          <div className="relative z-10 w-full max-w-md rounded-2xl bg-content1 p-6 shadow-xl">
             <button type="button" aria-label="Close manage repository dialog" onClick={closeRepositoryManager} className="absolute right-4 top-4 text-foreground-500 hover:text-foreground">
               <X className="h-5 w-5" />
             </button>
@@ -413,7 +419,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
               value={managedName}
               onChange={(event) => setManagedName(event.target.value)}
               disabled={isSavingRepository}
-              className="mt-2 w-full rounded-md border border-default-200 bg-content2 px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+              className="mt-2 w-full rounded-md border border-default-200 bg-content2 px-3 py-2 text-sm text-foreground outline-none focus:border-gray-500"
             />
             <label className="mt-4 block text-sm font-medium text-foreground" htmlFor="repository-visibility">Visibility</label>
             <select
@@ -421,14 +427,14 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
               value={managedVisibility}
               onChange={(event) => setManagedVisibility(event.target.value as 'public' | 'private')}
               disabled={isSavingRepository}
-              className="mt-2 w-full rounded-md border border-default-200 bg-content2 px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+              className="mt-2 w-full rounded-md border border-default-200 bg-content2 px-3 py-2 text-sm text-foreground outline-none focus:border-gray-500"
             >
               <option value="public">Public</option>
               <option value="private">Private</option>
             </select>
             <div className="mt-6 flex justify-end gap-2">
               <Button variant="secondary" onClick={closeRepositoryManager} disabled={isSavingRepository}>Cancel</Button>
-              <Button onClick={saveRepositoryChanges} isLoading={isSavingRepository}>Save changes</Button>
+              <Button variant="secondary" onClick={saveRepositoryChanges} isLoading={isSavingRepository}>Save changes</Button>
             </div>
           </div>
         </div>
