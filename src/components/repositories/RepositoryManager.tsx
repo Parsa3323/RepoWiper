@@ -282,7 +282,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                     disabled={isLoading || paginatedRepositories.length === 0}
                   />
                 </div>
-                <div className="flex-1 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto_2.25rem]">
+                <div className="flex-1 grid grid-cols-1 gap-y-3 gap-x-2 sm:grid-cols-[minmax(0,1fr)_auto_auto_2.25rem]">
                   <div className="text-sm font-medium text-foreground">Repository</div>
                   <div className="hidden sm:block text-sm font-medium text-foreground">Last Updated</div>
                   <div className="hidden sm:block text-sm font-medium text-foreground">Visibility</div>
@@ -321,7 +321,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                           onChange={() => toggleRepositorySelection(repo.name)}
                         />
                       </div>
-                      <div className="flex-1 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto_2.25rem]">
+                      <div className="flex-1 grid grid-cols-1 gap-y-3 gap-x-2 sm:grid-cols-[minmax(0,1fr)_auto_auto_2.25rem]">
                         <div>
                           <a 
                             href={repo.html_url} 
@@ -360,7 +360,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                             onClick={() => openRepositoryManager(repo)}
                             aria-label={`Manage ${repo.name}`}
                             title={`Manage ${repo.name}`}
-                            className="h-8 min-w-8 w-8 px-0"
+                            className="h-9 min-w-9 w-9 px-0"
                           >
                             <Settings2 className="h-4 w-4" />
                           </Button>
