@@ -16,3 +16,25 @@ body {
   background-color: var(--background);
   color: var(--foreground);
 }
+
+.auth-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 6rem;
+}
+
+.auth-card {
+  justify-self: end;
+}
+
+@media (max-width: 767px) {
+  .auth-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3rem;
+  }
+
+  .auth-card {
+    justify-self: start;
+  }
+}
