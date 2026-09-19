@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { toast } from '../ui/useToast';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { Button } from '../ui/Button';
@@ -162,8 +162,8 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
         </header>
 
         <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="mb-6 flex flex-col lg:flex-row gap-4">
-            <div className="w-full lg:w-1/3">
+          <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="w-full min-w-0 lg:flex-1">
               <Input
                 type="text"
                 placeholder="Search repositories..."
@@ -174,12 +174,12 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
               />
             </div>
             
-            <div className="flex flex-wrap gap-4 items-center justify-end lg:flex-1">
+            <div className="flex flex-wrap items-center gap-2 lg:flex-none">
               <Select
                 label="Sort by"
                 selectedKeys={[sortBy]}
                 onChange={(e) => setSortBy(e.target.value as 'updated' | 'created' | 'name')}
-                className="w-48"
+                className="w-40"
                 size="sm"
               >
                 <SelectItem key="updated" value="updated">Last updated</SelectItem>
@@ -190,12 +190,13 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
               <Button
                 variant="secondary"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3"
+                aria-label={sortOrder === 'asc' ? 'Sort descending' : 'Sort ascending'}
+                className="h-10 min-w-10 px-0"
               >
-                {sortOrder === 'asc' ? '↑' : '↓'}
+                {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
               
-              <div className="flex gap-2 ml-auto">
+              <div className="ml-auto flex gap-2">
                 <Button
                   variant="secondary"
                   onClick={fetchRepositories}
@@ -286,7 +287,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                             href={repo.html_url} 
                             target="_blank" 
                             rel="noreferrer"
-                            className="text-sm font-medium text-primary hover:underline"
+                            className="text-sm font-semibold text-white hover:text-gray-300 hover:underline"
                           >
                             {repo.name}
                           </a>

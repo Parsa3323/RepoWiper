@@ -16,6 +16,7 @@ const AuthScreen: React.FC = () => (
       <Button
         type="button"
         onClick={() => { window.location.href = '/api/auth/login'; }}
+        variant="secondary"
         className="w-full"
         leftIcon={<Github className="h-4 w-4" />}
       >
