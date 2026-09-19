@@ -175,7 +175,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
               <div className="flex items-center">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Repository management</p>
-                  <p className="mt-1 text-xl font-bold text-foreground">By Rabity</p>
+                  <p className="mt-1 text-xl font-black text-foreground">By Rabity</p>
                 </div>
               </div>
               
@@ -282,7 +282,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                     disabled={isLoading || paginatedRepositories.length === 0}
                   />
                 </div>
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div className="flex-1 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto_2.25rem]">
                   <div className="text-sm font-medium text-foreground">Repository</div>
                   <div className="hidden sm:block text-sm font-medium text-foreground">Last Updated</div>
                   <div className="hidden sm:block text-sm font-medium text-foreground">Visibility</div>
@@ -321,7 +321,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                           onChange={() => toggleRepositorySelection(repo.name)}
                         />
                       </div>
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-4">
+                      <div className="flex-1 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto_2.25rem]">
                         <div>
                           <a 
                             href={repo.html_url} 
@@ -360,7 +360,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                             onClick={() => openRepositoryManager(repo)}
                             aria-label={`Manage ${repo.name}`}
                             title={`Manage ${repo.name}`}
-                            className="h-9 min-w-9 w-9 px-0"
+                            className="h-8 min-w-8 w-8 px-0"
                           >
                             <Settings2 className="h-4 w-4" />
                           </Button>
