@@ -26,6 +26,7 @@ const request = async <T>(path: string, options?: RequestInit): Promise<T> => {
     ...options,
     headers: { Accept: 'application/json', ...options?.headers },
   });
+  if (response.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event('github:unauthorized'));
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { error?: string } | null;
     throw new Error(body?.error ?? `Request failed with status ${response.status}`);

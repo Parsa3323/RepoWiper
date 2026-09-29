@@ -1,4 +1,4 @@
-import { githubRequest, requireSession } from '../../../_lib/auth.js';
+import { expireSession, githubRequest, requireSession } from '../../../_lib/auth.js';
 import { ApiRequest, ApiResponse } from '../../../types.js';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
@@ -18,10 +18,18 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, visibility }),
     });
+    if (response.status === 401) {
+      expireSession(res);
+      return res.status(401).json({ error: 'GitHub session expired' });
+    }
     if (!response.ok) return res.status(response.status).json({ error: 'GitHub could not update this repository' });
     return res.status(200).json(await response.json());
   }
   const response = await githubRequest(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, session.accessToken, { method: 'DELETE' });
+  if (response.status === 401) {
+    expireSession(res);
+    return res.status(401).json({ error: 'GitHub session expired' });
+  }
   if (!response.ok) return res.status(response.status).json({ error: 'GitHub could not delete this repository' });
   return res.status(204).end();
 }

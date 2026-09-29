@@ -4,19 +4,29 @@ import AuthScreen from './components/auth/AuthScreen';
 import RepositoryManager from './components/repositories/RepositoryManager';
 import { Toaster } from './components/ui/Toaster';
 import { getSession, logout, User } from './services/githubService';
+import { toast } from './components/ui/useToast';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    getSession().then((session) => setUser(session.user)).catch(() => setUser(null)).finally(() => setIsLoading(false));
-  }, []);
-
   const handleLogout = async () => {
     await logout().catch(() => undefined);
     setUser(null);
   };
+
+  useEffect(() => {
+    getSession().then((session) => setUser(session.user)).catch(() => setUser(null)).finally(() => setIsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      void handleLogout();
+      toast({ title: 'Session expired', description: 'Please sign in with GitHub again.', variant: 'destructive' });
+    };
+    window.addEventListener('github:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('github:unauthorized', handleUnauthorized);
+  }, []);
 
   return (
     <ThemeProvider>

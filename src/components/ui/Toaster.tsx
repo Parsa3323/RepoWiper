@@ -43,10 +43,10 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onClose }) => {
       }`}
     >
       <div
-        className={`rounded-lg shadow-lg bg-white dark:bg-slate-800 border ${
+        className={`rounded-lg border bg-[#242424] shadow-lg ${
           toast.variant === 'destructive'
-            ? 'border-red-200 dark:border-red-800'
-            : 'border-slate-200 dark:border-slate-700'
+            ? 'border-red-800'
+            : 'border-gray-700'
         }`}
       >
         <div className="p-4 flex items-start">
@@ -55,19 +55,19 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onClose }) => {
           </div>
           <div className="flex-1">
             {toast.title && (
-              <h3 className="font-medium text-slate-900 dark:text-white text-sm">
+              <h3 className="text-sm font-medium text-white">
                 {toast.title}
               </h3>
             )}
             {toast.description && (
-              <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              <div className="mt-1 text-sm text-gray-400">
                 {toast.description}
               </div>
             )}
           </div>
           <button
             type="button"
-            className="ml-4 flex-shrink-0 text-slate-400 hover:text-slate-500 focus:outline-none"
+            className="ml-4 flex-shrink-0 text-gray-500 hover:text-gray-300 focus:outline-none"
             onClick={onClose}
           >
             <X className="h-4 w-4" />

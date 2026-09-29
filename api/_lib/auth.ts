@@ -41,6 +41,7 @@ export const parseCookies = (header?: string) => Object.fromEntries((header ?? '
 const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
 export const sessionCookie = (value: string, maxAge = 604800) => `${cookieName}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; HttpOnly; SameSite=Lax${secure}`;
 export const clearSessionCookie = () => sessionCookie('', 0);
+export const expireSession = (res: ApiResponse) => res.setHeader('Set-Cookie', clearSessionCookie());
 export const stateCookie = (value: string) => `${stateCookieName}=${value}; Max-Age=600; Path=/; HttpOnly; SameSite=Lax${secure}`;
 export const clearStateCookie = () => `${stateCookieName}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax${secure}`;
 export const getSession = (req: ApiRequest) => decryptSession(parseCookies(req.headers.cookie)[cookieName]);
