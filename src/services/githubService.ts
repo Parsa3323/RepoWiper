@@ -37,6 +37,11 @@ const request = async <T>(path: string, options?: RequestInit): Promise<T> => {
 
 export const getSession = (): Promise<SessionResponse> => request('/api/auth/session');
 export const logout = (): Promise<void> => request('/api/auth/logout', { method: 'POST' });
+export const loginWithToken = (token: string): Promise<SessionResponse> => request('/api/auth/token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ token }),
+});
 export const fetchUserRepositories = (): Promise<{ repositories: Repository[]; user: User }> => request('/api/github/repositories');
 export const deleteRepository = (owner: string, repo: string): Promise<void> =>
   request(`/api/github/repositories/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, { method: 'DELETE' });

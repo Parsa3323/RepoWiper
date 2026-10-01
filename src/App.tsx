@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ThemeProvider } from './components/theme/ThemeProvider';
 import AuthScreen from './components/auth/AuthScreen';
 import RepositoryManager from './components/repositories/RepositoryManager';
@@ -11,10 +11,10 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await logout().catch(() => undefined);
     setUser(null);
-  };
+  }, []);
 
   useEffect(() => {
     getSession().then((session) => setUser(session.user)).catch(() => setUser(null)).finally(() => setIsLoading(false));
@@ -27,7 +27,7 @@ const App: React.FC = () => {
     };
     window.addEventListener('github:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('github:unauthorized', handleUnauthorized);
-  }, []);
+  }, [handleLogout]);
 
   return (
     <ThemeProvider>
@@ -39,6 +39,9 @@ const App: React.FC = () => {
           </div>
         ) : user ? <RepositoryManager user={user} onLogout={handleLogout} /> : <AuthScreen />}
         <Toaster />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#111111] p-6 text-center text-gray-300 sm:hidden">
+          <p className="max-w-xs text-sm">This app is not yet available on mobile devices.</p>
+        </div>
       </div>
     </ThemeProvider>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 import { Button } from './Button';
 import { Repository } from '../../services/githubService';
+import { Modal } from './Modal';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -27,11 +28,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm" onClick={onClose} />
-      
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="relative bg-[#242424] rounded-lg max-w-md w-full mx-auto shadow-xl overflow-hidden">
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-md">
           <div className="absolute top-0 right-0 pt-4 pr-4">
             <button
               type="button"
@@ -58,7 +55,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   <h4 className="text-sm font-medium text-gray-200 mb-2">
                     Repositories to delete:
                   </h4>
-                  <div className="max-h-48 overflow-y-auto rounded border border-gray-700 bg-[#2a2a2a]">
+                  <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-700 bg-[#181818]">
                     <ul className="divide-y divide-gray-700">
                       {repositories.map((repo) => (
                         <li key={repo.name} className="py-2 px-3 text-sm">
@@ -75,21 +72,21 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 </div>
               )}
               
-              <div className="text-sm bg-yellow-900/20 p-3 mt-4 rounded-md border border-yellow-800/30">
-                <p className="text-yellow-300 font-medium">Warning</p>
-                <p className="text-yellow-200 mt-1">
+              <div className="mt-4 rounded-lg border border-red-900/40 bg-red-950/20 p-3 text-sm">
+                <p className="font-medium text-red-300">Warning</p>
+                <p className="mt-1 text-red-200">
                   This action will permanently delete the selected repositories, including all code, issues, and pull requests.
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="bg-[#2a2a2a] px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+          <div className="flex flex-col-reverse gap-2 border-t border-default-200 bg-[#181818] px-6 py-4 sm:flex-row sm:justify-end">
             <Button
               variant="secondary"
               onClick={onClose}
               disabled={isProcessing}
-              className="border-gray-600 text-gray-300 hover:bg-[#333333]"
+              className="border-gray-600 text-gray-300 hover:bg-[#242424]"
             >
               Cancel
             </Button>
@@ -98,14 +95,12 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               onClick={onConfirm}
               isLoading={isProcessing}
               leftIcon={<AlertTriangle className="h-4 w-4" />}
-              className="bg-red-900/20 text-red-400 border-red-800/30 hover:bg-red-900/30"
+              className="border-2 border-red-700 bg-red-900/20 text-red-400 hover:bg-red-900/30"
             >
               {confirmLabel}
             </Button>
           </div>
-        </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

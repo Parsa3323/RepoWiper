@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, RefreshCw, Settings2, X } from 'lucide-react';
+import React, { useCallback, useState, useEffect } from 'react';
+import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, RefreshCw, Settings2, X, Lock, Unlock } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { toast } from '../ui/useToast';
 import ConfirmationModal from '../ui/ConfirmationModal';
+import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Repository, fetchUserRepositories, deleteRepository, updateRepository, User } from '../../services/githubService';
-import { Select, SelectItem, Input, Spinner } from '@nextui-org/react';
+import { Checkbox, Select, SelectItem, Input, Spinner } from '@nextui-org/react';
 
 interface RepositoryManagerProps {
   user: User;
@@ -28,8 +30,9 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
   const [managedName, setManagedName] = useState('');
   const [managedVisibility, setManagedVisibility] = useState<'public' | 'private'>('public');
   const [isSavingRepository, setIsSavingRepository] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ repository: Repository; x: number; y: number } | null>(null);
 
-  const fetchRepositories = async () => {
+  const fetchRepositories = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -48,11 +51,22 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchRepositories();
-  }, []);
+  }, [fetchRepositories]);
+
+  useEffect(() => {
+    if (!contextMenu) return undefined;
+    const closeContextMenu = () => setContextMenu(null);
+    window.addEventListener('click', closeContextMenu);
+    window.addEventListener('scroll', closeContextMenu, true);
+    return () => {
+      window.removeEventListener('click', closeContextMenu);
+      window.removeEventListener('scroll', closeContextMenu, true);
+    };
+  }, [contextMenu]);
 
   const openRepositoryManager = (repository: Repository) => {
     setManagedRepository(repository);
@@ -62,6 +76,48 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
 
   const closeRepositoryManager = () => {
     if (!isSavingRepository) setManagedRepository(null);
+  };
+
+  const changeRepositoryVisibility = async (repository: Repository, visibility: 'public' | 'private') => {
+    try {
+      const updated = await updateRepository(user.login, repository.name, { name: repository.name, visibility });
+      setRepositories((current) => current.map((item) => item.id === updated.id ? updated : item));
+      toast({ title: 'Repository updated', description: `${updated.name} is now ${visibility}.` });
+    } catch (err) {
+      toast({ title: 'Could not update repository', description: err instanceof Error ? err.message : 'The repository could not be updated.', variant: 'destructive' });
+    }
+  };
+
+  const handleRepositoryContextMenu = (event: React.MouseEvent, repository: Repository) => {
+    event.preventDefault();
+    setContextMenu({
+      repository,
+      x: Math.min(event.clientX, window.innerWidth - 240),
+      y: Math.min(event.clientY, window.innerHeight - 150),
+    });
+  };
+
+  const handleContextDelete = () => {
+    if (!contextMenu) return;
+    setSelectedRepos([contextMenu.repository.name]);
+    setShowConfirmation(true);
+    setContextMenu(null);
+  };
+
+  const handleContextVisibility = () => {
+    if (!contextMenu) return;
+    const repository = contextMenu.repository;
+    const visibility = repository.visibility === 'private' ? 'public' : 'private';
+    setContextMenu(null);
+    void changeRepositoryVisibility(repository, visibility);
+  };
+
+  const handleContextRename = () => {
+    if (!contextMenu) return;
+    setManagedRepository(contextMenu.repository);
+    setManagedName(contextMenu.repository.name);
+    setManagedVisibility(contextMenu.repository.visibility === 'private' ? 'private' : 'public');
+    setContextMenu(null);
   };
 
   const saveRepositoryChanges = async () => {
@@ -123,7 +179,6 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
   const handleDeleteRepositories = async () => {
     try {
       setIsDeleting(true);
-      
       const results = await Promise.allSettled(
         selectedRepos.map((repoName) => 
           deleteRepository(user.login, repoName)
@@ -168,8 +223,8 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
 
   return (
     <>
-      <div className="min-h-screen flex flex-col bg-background">
-        <header className="bg-content1 shadow-medium border-b border-divider">
+      <div className="min-h-screen flex flex-col bg-[#111111]">
+        <header className="bg-[#111111] shadow-medium border-b border-divider">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center">
@@ -270,23 +325,25 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
             </div>
           )}
 
-          <div className="bg-content1 rounded-lg shadow-medium overflow-hidden">
+          <div className="bg-[#111111] rounded-lg shadow-medium overflow-hidden">
             <div className="border-b border-divider">
-              <div className="px-6 py-3 flex items-center bg-content2">
-                <div className="flex items-center mr-4">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 cursor-pointer rounded border-gray-500 accent-[#64748b] focus:ring-2 focus:ring-[#64748b]/40"
-                    checked={selectedRepos.length === paginatedRepositories.length && paginatedRepositories.length > 0}
-                    onChange={toggleSelectAll}
-                    disabled={isLoading || paginatedRepositories.length === 0}
+              <div className="px-6 py-3 flex items-center bg-[#181818]">
+                <div className="mr-4 flex h-5 w-5 items-center">
+                  <Checkbox
+                    size="sm"
+                    color="default"
+                    isSelected={selectedRepos.length === paginatedRepositories.length && paginatedRepositories.length > 0}
+                    onValueChange={toggleSelectAll}
+                    isDisabled={isLoading || paginatedRepositories.length === 0}
+                    aria-label="Select all repositories"
+                    classNames={{ base: 'm-0 min-w-0 p-0', wrapper: 'm-0 h-4 w-4 rounded-[4px]' }}
                   />
                 </div>
-                <div className="flex-1 grid grid-cols-1 gap-y-3 gap-x-8 pr-8 sm:grid-cols-[minmax(0,1fr)_12rem_9rem_2.25rem]">
+                <div className="grid flex-1 grid-cols-1 items-center gap-x-8 gap-y-3 pr-8 sm:grid-cols-[minmax(0,1fr)_12rem_9rem_2.25rem]">
                   <div className="text-sm font-medium text-foreground">Repository</div>
-                  <div className="hidden sm:block text-sm font-medium text-foreground">Last Updated</div>
-                  <div className="hidden sm:block text-sm font-medium text-foreground">Visibility</div>
-                  <div className="hidden sm:block text-sm font-medium text-foreground">Manage</div>
+                  <div className="hidden h-9 items-center text-sm font-medium text-foreground sm:flex">Last Updated</div>
+                  <div className="hidden h-9 items-center text-sm font-medium text-foreground sm:flex">Visibility</div>
+                  <div className="hidden h-9 items-center text-sm font-medium text-foreground sm:flex">Manage</div>
                 </div>
               </div>
             </div>
@@ -311,17 +368,19 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
             {!isLoading && paginatedRepositories.length > 0 && (
               <ul className="divide-y divide-divider">
                 {paginatedRepositories.map((repo) => (
-                  <li key={repo.name} className="px-6 py-4 hover:bg-content2 transition-colors">
+                  <li key={repo.name} onContextMenu={(event) => handleRepositoryContextMenu(event, repo)} className="px-6 py-4 transition-colors hover:bg-[#181818]">
                     <div className="flex items-center">
-                      <div className="flex items-center mr-4">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 cursor-pointer rounded border-gray-500 accent-[#64748b] focus:ring-2 focus:ring-[#64748b]/40"
-                          checked={selectedRepos.includes(repo.name)}
-                          onChange={() => toggleRepositorySelection(repo.name)}
+                      <div className="mr-4 flex h-5 w-5 items-center">
+                        <Checkbox
+                          size="sm"
+                          color="default"
+                          isSelected={selectedRepos.includes(repo.name)}
+                          onValueChange={() => toggleRepositorySelection(repo.name)}
+                          aria-label={`Select ${repo.name}`}
+                          classNames={{ base: 'm-0 min-w-0 p-0', wrapper: 'm-0 h-4 w-4 rounded-[4px]' }}
                         />
                       </div>
-                      <div className="flex-1 grid grid-cols-1 gap-y-3 gap-x-8 pr-8 sm:grid-cols-[minmax(0,1fr)_12rem_9rem_2.25rem]">
+                      <div className="grid flex-1 grid-cols-1 items-center gap-x-8 gap-y-3 pr-8 sm:grid-cols-[minmax(0,1fr)_12rem_9rem_2.25rem]">
                         <div>
                           <a 
                             href={repo.html_url} 
@@ -342,19 +401,16 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                             <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
                           </div>
                         </div>
-                        <div className="hidden sm:block text-sm text-foreground-500">
+                        <div className="hidden h-9 items-center text-sm text-foreground-500 sm:flex">
                           {new Date(repo.updated_at).toLocaleDateString()}
                         </div>
-                        <div className="hidden sm:block">
-                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-                            repo.visibility === 'public'
-                              ? 'border-success text-success-500'
-                              : 'border-warning text-warning-500'
-                          }`}>
+                        <div className="hidden h-9 items-center sm:flex">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-gray-600 px-2.5 py-0.5 text-xs font-medium text-gray-300">
+                            {repo.visibility === 'private' ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
                             {repo.visibility}
                           </span>
                         </div>
-                        <div className="hidden items-center sm:flex">
+                        <div className="hidden h-9 items-center sm:flex">
                           <Button
                             variant="secondary"
                             onClick={() => openRepositoryManager(repo)}
@@ -373,7 +429,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
             )}
 
             {!isLoading && totalPages > 1 && (
-              <div className="px-6 py-3 flex items-center justify-between border-t border-divider bg-content2">
+              <div className="px-6 py-3 flex items-center justify-between border-t border-divider bg-[#181818]">
                 <div className="text-sm text-foreground-500">
                   Showing {(currentPage - 1) * pageSize + 1}-
                   {Math.min(currentPage * pageSize, filteredRepositories.length)} of {filteredRepositories.length}
@@ -397,17 +453,15 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
           </div>
         </main>
         
-        <footer className="bg-content1 border-t border-divider">
+        <footer className="bg-[#111111] border-t border-divider">
           <div className="container mx-auto px-4 py-4 text-center text-sm text-foreground-500">
             © {new Date().getFullYear()} GitHub Repository Wiper by Parsa3323. All rights reserved.
           </div>
         </footer>
       </div>
 
-      {managedRepository && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={closeRepositoryManager} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl bg-content1 p-6 shadow-xl">
+      <Modal isOpen={Boolean(managedRepository)} onClose={closeRepositoryManager} className="max-w-md p-0">
+        <div className="p-6">
             <button type="button" aria-label="Close manage repository dialog" onClick={closeRepositoryManager} className="absolute right-4 top-4 text-foreground-500 hover:text-foreground">
               <X className="h-5 w-5" />
             </button>
@@ -419,7 +473,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
               value={managedName}
               onChange={(event) => setManagedName(event.target.value)}
               disabled={isSavingRepository}
-              className="mt-2 w-full rounded-md border border-default-200 bg-content2 px-3 py-2 text-sm text-foreground outline-none focus:border-gray-500"
+              className="mt-2 w-full rounded-md border border-default-200 bg-[#181818] px-3 py-2 text-sm text-foreground outline-none focus:border-gray-500"
             />
             <label className="mt-4 block text-sm font-medium text-foreground" htmlFor="repository-visibility">Visibility</label>
             <select
@@ -427,17 +481,44 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
               value={managedVisibility}
               onChange={(event) => setManagedVisibility(event.target.value as 'public' | 'private')}
               disabled={isSavingRepository}
-              className="mt-2 w-full rounded-md border border-default-200 bg-content2 px-3 py-2 text-sm text-foreground outline-none focus:border-gray-500"
+              className="mt-2 w-full rounded-md border border-default-200 bg-[#181818] px-3 py-2 text-sm text-foreground outline-none focus:border-gray-500"
             >
               <option value="public">Public</option>
               <option value="private">Private</option>
             </select>
-            <div className="mt-6 flex justify-end gap-2">
-              <Button variant="secondary" onClick={closeRepositoryManager} disabled={isSavingRepository}>Cancel</Button>
-              <Button variant="secondary" onClick={saveRepositoryChanges} isLoading={isSavingRepository}>Save changes</Button>
-            </div>
-          </div>
         </div>
+        <div className="flex flex-col-reverse gap-2 border-t border-default-200 bg-[#181818] px-6 py-4 sm:flex-row sm:justify-end">
+          <Button variant="secondary" onClick={closeRepositoryManager} disabled={isSavingRepository}>Cancel</Button>
+          <Button variant="secondary" onClick={saveRepositoryChanges} isLoading={isSavingRepository}>Save changes</Button>
+        </div>
+      </Modal>
+
+      {contextMenu && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+          className="fixed z-50 w-56 overflow-hidden rounded-xl border border-default-200 bg-[#111111] p-1.5 shadow-xl"
+          style={{ left: contextMenu.x, top: contextMenu.y, transformOrigin: 'top left' }}
+          onClick={(event) => event.stopPropagation()}
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          <p className="truncate px-3 py-2 text-xs text-foreground-500">{contextMenu.repository.name}</p>
+          <div className="space-y-1">
+            <button type="button" onClick={handleContextRename} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-[#181818]">
+              <Settings2 className="h-4 w-4" />
+              Rename repository
+            </button>
+            <button type="button" onClick={handleContextVisibility} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-[#181818]">
+              {contextMenu.repository.visibility === 'private' ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+              Make {contextMenu.repository.visibility === 'private' ? 'public' : 'private'}
+            </button>
+            <button type="button" onClick={handleContextDelete} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-danger transition-colors hover:bg-danger-50">
+              <Trash2 className="h-4 w-4" />
+              Delete repository
+            </button>
+          </div>
+        </motion.div>
       )}
 
       <ConfirmationModal
