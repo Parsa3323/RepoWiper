@@ -25,7 +25,12 @@ const AuthScreen: React.FC = () => {
 
   return (
     <main className="relative flex min-h-screen items-center overflow-hidden bg-black px-6 py-12 sm:px-10">
-      <InteractiveGridPattern className="[mask-image:radial-gradient(600px_500px_at_center,white,transparent)] inset-x-0 inset-y-[-50%] h-[200%] skew-y-12" />
+    <InteractiveGridPattern
+      width={48}
+      height={48}
+      squares={[50, 60]}
+      className="[mask-image:radial-gradient(ellipse_660px_420px_at_center,white,transparent)] !inset-x-0 !top-1/2 !bottom-auto !h-[200%] -translate-y-1/2 skew-y-12"
+    />
       <div className="auth-layout relative z-10 mx-auto w-full max-w-6xl">
         <section className="max-w-xl">
           <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Repository management</p>

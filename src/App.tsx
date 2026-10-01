@@ -39,9 +39,6 @@ const App: React.FC = () => {
           </div>
         ) : user ? <RepositoryManager user={user} onLogout={handleLogout} /> : <AuthScreen />}
         <Toaster />
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#111111] p-6 text-center text-gray-300 sm:hidden">
-          <p className="max-w-xs text-sm">This app is not yet available on mobile devices.</p>
-        </div>
       </div>
     </ThemeProvider>
   );

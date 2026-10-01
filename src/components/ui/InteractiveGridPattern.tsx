@@ -22,14 +22,13 @@ export const InteractiveGridPattern: React.FC<InteractiveGridPatternProps> = ({
     <svg
       width={width * horizontal}
       height={height * vertical}
-      viewBox={`0 0 ${width * horizontal} ${height * vertical}`}
-      preserveAspectRatio="none"
       className={`absolute inset-0 h-full w-full border border-gray-400/30 ${className}`}
       {...props}
     >
       {Array.from({ length: horizontal * vertical }).map((_, index) => {
         const x = (index % horizontal) * width;
         const y = Math.floor(index / horizontal) * height;
+
         return (
           <rect
             key={index}
