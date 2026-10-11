@@ -54,6 +54,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onPreview }) => {
           >
             Login with GitHub
           </Button>
+          <p className="mt-3 text-center text-xs leading-5 text-gray-500">
+            You will be redirected to GitHub to authorize RepoWiper. Your GitHub password is entered only on github.com, and RepoWiper never sees it.
+          </p>
 
           <div className="my-6 flex items-center gap-3 text-xs text-gray-600">
             <span className="h-px flex-1 bg-[#3a3a3a]" />
