@@ -7,11 +7,7 @@ import { InteractiveGridPattern } from '../ui/InteractiveGridPattern';
 import { Highlighter } from '../ui/Highlighter';
 import { LineShadowText } from '../ui/line-shadow-text';
 
-interface AuthScreenProps {
-  onPreview: () => void;
-}
-
-const AuthScreen: React.FC<AuthScreenProps> = ({ onPreview }) => {
+const AuthScreen: React.FC = () => {
   const [token, setToken] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -90,9 +86,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onPreview }) => {
           </form>
 
           <p className="mt-4 text-center text-xs text-gray-500">Your token is used only to sign in and is kept in an encrypted session.</p>
-          <button type="button" onClick={onPreview} className="mt-5 w-full text-xs text-gray-500 underline-offset-4 hover:text-gray-300 hover:underline">
-            Preview with sample repositories
-          </button>
         </section>
       </div>
     </main>

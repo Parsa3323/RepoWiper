@@ -8,13 +8,11 @@ import { Button } from '../ui/Button';
 import { LightRays } from '../ui/light-rays';
 import { LineShadowText } from '../ui/line-shadow-text';
 import { Repository, fetchUserRepositories, deleteRepository, updateRepository, User } from '../../services/githubService';
-import { previewRepositories } from '../../services/mockData';
 import { Checkbox, Select, SelectItem, Input, Spinner } from '@nextui-org/react';
 
 interface RepositoryManagerProps {
   user: User;
   onLogout: () => void;
-  isPreview?: boolean;
 }
 
 const getCalendarDays = (date: Date) => {
@@ -23,7 +21,7 @@ const getCalendarDays = (date: Date) => {
   return Array.from({ length: firstDay + daysInMonth }, (_, index) => index < firstDay ? null : index - firstDay + 1);
 };
 
-const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, isPreview = false }) => {
+const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout }) => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [filteredRepositories, setFilteredRepositories] = useState<Repository[]>([]);
   const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
@@ -47,12 +45,8 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, i
       setIsLoading(true);
       setError(null);
       
-      if (isPreview) {
-        setRepositories(previewRepositories);
-      } else {
-        const result = await fetchUserRepositories();
-        setRepositories(result.repositories);
-      }
+      const result = await fetchUserRepositories();
+      setRepositories(result.repositories);
       
       setSelectedRepos([]);
     } catch (err) {
@@ -65,7 +59,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, i
     } finally {
       setIsLoading(false);
     }
-  }, [isPreview]);
+  }, []);
 
   useEffect(() => {
     fetchRepositories();
@@ -94,11 +88,6 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, i
 
   const changeRepositoryVisibility = async (repository: Repository, visibility: 'public' | 'private') => {
     try {
-      if (isPreview) {
-        setRepositories((current) => current.map((item) => item.id === repository.id ? { ...item, visibility, private: visibility === 'private' } : item));
-        toast({ title: 'Preview updated', description: `${repository.name} is now ${visibility}.` });
-        return;
-      }
       const updated = await updateRepository(user.login, repository.name, { name: repository.name, visibility });
       setRepositories((current) => current.map((item) => item.id === updated.id ? updated : item));
       toast({ title: 'Repository updated', description: `${updated.name} is now ${visibility}.` });
@@ -143,19 +132,6 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, i
     if (!managedRepository || !managedName.trim()) return;
     try {
       setIsSavingRepository(true);
-      if (isPreview) {
-        const updatedName = managedName.trim();
-        setRepositories((current) => current.map((repository) => repository.id === managedRepository.id ? {
-          ...repository,
-          name: updatedName,
-          full_name: `${user.login}/${updatedName}`,
-          visibility: managedVisibility,
-          private: managedVisibility === 'private',
-        } : repository));
-        setManagedRepository(null);
-        toast({ title: 'Preview updated', description: `${updatedName} was updated successfully.` });
-        return;
-      }
       const updated = await updateRepository(user.login, managedRepository.name, {
         name: managedName.trim(),
         visibility: managedVisibility,
@@ -211,13 +187,6 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, i
   const handleDeleteRepositories = async () => {
     try {
       setIsDeleting(true);
-      if (isPreview) {
-        setRepositories((prev) => prev.filter((repo) => !selectedRepos.includes(repo.name)));
-        const deletedCount = selectedRepos.length;
-        setSelectedRepos([]);
-        toast({ title: 'Preview updated', description: `Simulated deletion of ${deletedCount} repositories.` });
-        return;
-      }
       const results = await Promise.allSettled(
         selectedRepos.map((repoName) => 
           deleteRepository(user.login, repoName)
