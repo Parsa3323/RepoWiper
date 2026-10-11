@@ -5,6 +5,7 @@ import { toast } from '../ui/useToast';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { LightRays } from '../ui/light-rays';
 import { Repository, fetchUserRepositories, deleteRepository, updateRepository, User } from '../../services/githubService';
 import { Checkbox, Select, SelectItem, Input, Spinner } from '@nextui-org/react';
 
@@ -223,8 +224,9 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
 
   return (
     <>
-      <div className="min-h-screen flex flex-col bg-[#111111]">
-        <header className="bg-[#111111] shadow-medium border-b border-divider">
+      <div className="relative min-h-screen flex flex-col overflow-hidden bg-[#111111]">
+        <LightRays />
+        <header className="relative z-10 bg-[#111111] shadow-medium border-b border-divider">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center">
@@ -252,7 +254,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
           </div>
         </header>
 
-        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <main className="relative z-10 flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="w-full min-w-0 lg:flex-1">
               <Input
@@ -453,7 +455,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
           </div>
         </main>
         
-        <footer className="bg-[#111111] border-t border-divider">
+        <footer className="relative z-10 bg-[#111111] border-t border-divider">
           <div className="container mx-auto px-4 py-4 text-center text-sm text-foreground-500">
             © {new Date().getFullYear()} GitHub Repository Wiper by Parsa3323. All rights reserved.
           </div>

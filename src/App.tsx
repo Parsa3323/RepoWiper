@@ -31,7 +31,7 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-[#1a1a1a]">
+      <div className="min-h-screen bg-[#111111]">
         {isLoading ? (
           <div className="flex min-h-screen flex-col items-center justify-center gap-3 text-gray-400">
             <Spinner color="default" size="lg" />
