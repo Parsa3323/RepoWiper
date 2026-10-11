@@ -1,20 +1,29 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, RefreshCw, Settings2, X, Lock, Unlock } from 'lucide-react';
+import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, RefreshCw, Settings2, X, Lock, Unlock, ExternalLink, CalendarDays } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '../ui/useToast';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { LightRays } from '../ui/light-rays';
+import { LineShadowText } from '../ui/line-shadow-text';
 import { Repository, fetchUserRepositories, deleteRepository, updateRepository, User } from '../../services/githubService';
+import { previewRepositories } from '../../services/mockData';
 import { Checkbox, Select, SelectItem, Input, Spinner } from '@nextui-org/react';
 
 interface RepositoryManagerProps {
   user: User;
   onLogout: () => void;
+  isPreview?: boolean;
 }
 
-const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout }) => {
+const getCalendarDays = (date: Date) => {
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  return Array.from({ length: firstDay + daysInMonth }, (_, index) => index < firstDay ? null : index - firstDay + 1);
+};
+
+const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, isPreview = false }) => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [filteredRepositories, setFilteredRepositories] = useState<Repository[]>([]);
   const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
@@ -38,8 +47,12 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
       setIsLoading(true);
       setError(null);
       
-      const result = await fetchUserRepositories();
-      setRepositories(result.repositories);
+      if (isPreview) {
+        setRepositories(previewRepositories);
+      } else {
+        const result = await fetchUserRepositories();
+        setRepositories(result.repositories);
+      }
       
       setSelectedRepos([]);
     } catch (err) {
@@ -52,7 +65,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isPreview]);
 
   useEffect(() => {
     fetchRepositories();
@@ -81,6 +94,11 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
 
   const changeRepositoryVisibility = async (repository: Repository, visibility: 'public' | 'private') => {
     try {
+      if (isPreview) {
+        setRepositories((current) => current.map((item) => item.id === repository.id ? { ...item, visibility, private: visibility === 'private' } : item));
+        toast({ title: 'Preview updated', description: `${repository.name} is now ${visibility}.` });
+        return;
+      }
       const updated = await updateRepository(user.login, repository.name, { name: repository.name, visibility });
       setRepositories((current) => current.map((item) => item.id === updated.id ? updated : item));
       toast({ title: 'Repository updated', description: `${updated.name} is now ${visibility}.` });
@@ -125,6 +143,19 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
     if (!managedRepository || !managedName.trim()) return;
     try {
       setIsSavingRepository(true);
+      if (isPreview) {
+        const updatedName = managedName.trim();
+        setRepositories((current) => current.map((repository) => repository.id === managedRepository.id ? {
+          ...repository,
+          name: updatedName,
+          full_name: `${user.login}/${updatedName}`,
+          visibility: managedVisibility,
+          private: managedVisibility === 'private',
+        } : repository));
+        setManagedRepository(null);
+        toast({ title: 'Preview updated', description: `${updatedName} was updated successfully.` });
+        return;
+      }
       const updated = await updateRepository(user.login, managedRepository.name, {
         name: managedName.trim(),
         visibility: managedVisibility,
@@ -180,6 +211,13 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
   const handleDeleteRepositories = async () => {
     try {
       setIsDeleting(true);
+      if (isPreview) {
+        setRepositories((prev) => prev.filter((repo) => !selectedRepos.includes(repo.name)));
+        const deletedCount = selectedRepos.length;
+        setSelectedRepos([]);
+        toast({ title: 'Preview updated', description: `Simulated deletion of ${deletedCount} repositories.` });
+        return;
+      }
       const results = await Promise.allSettled(
         selectedRepos.map((repoName) => 
           deleteRepository(user.login, repoName)
@@ -225,22 +263,61 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
   return (
     <>
       <div className="relative min-h-screen flex flex-col overflow-hidden bg-[#111111]">
-        <LightRays />
-        <header className="relative z-10 bg-[#111111] shadow-medium border-b border-divider">
+        <LightRays color="rgba(255, 248, 220, 0.22)" />
+        <header className="relative z-20 bg-[#111111] shadow-medium border-b border-divider">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center">
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Repository management</p>
-                  <p className="mt-1 text-xl font-black text-foreground">By Rabity</p>
+                  <p className="text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Repository Wiper</p>
+                  <p className="mt-1 text-xl font-black tracking-tighter text-foreground">By <LineShadowText className="font-black italic" shadowColor="#ffffff">Rabity</LineShadowText></p>
                 </div>
               </div>
               
               <div className="flex items-center gap-4">
                 {user.login && (
-                  <span className="text-sm text-foreground-500">
-                    Signed in as <span className="font-medium">{user.login}</span>
-                  </span>
+                  <div className="group relative">
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 rounded-xl px-2 py-1 text-left text-sm text-foreground-500 transition-colors hover:bg-[#181818] hover:text-foreground focus:outline-none focus:ring-1 focus:ring-default-300"
+                      aria-label={`View profile for ${user.login}`}
+                    >
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt="" className="h-7 w-7 rounded-full" />
+                      ) : (
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#242424] text-xs font-semibold text-foreground">
+                          {user.login.slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                      <span className="hidden sm:inline">Signed in as <span className="font-medium text-foreground">{user.login}</span></span>
+                    </button>
+                    <div className="absolute left-1/2 top-full z-30 hidden w-64 -translate-x-1/2 pt-2 group-hover:block group-focus-within:block">
+                      <div className="rounded-2xl border border-default-200 bg-[#111111] p-4 text-foreground shadow-xl">
+                        <div className="flex items-center gap-3">
+                          {user.avatar_url ? (
+                            <img src={user.avatar_url} alt="" className="h-12 w-12 rounded-full" />
+                          ) : (
+                            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#242424] text-lg font-semibold text-foreground">
+                              {user.login.slice(0, 1).toUpperCase()}
+                            </span>
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold">{user.login}</p>
+                            <p className="text-xs text-foreground-500">GitHub profile</p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="mt-4 w-full"
+                          rightIcon={<ExternalLink className="h-3.5 w-3.5" />}
+                          onClick={() => window.open(user.html_url, '_blank', 'noopener,noreferrer')}
+                        >
+                          View profile
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 )}
                 <Button
                   variant="secondary"
@@ -264,7 +341,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                 onChange={(e) => setSearchQuery(e.target.value)}
                 startContent={<Search className="h-4 w-4 text-foreground-500" />}
                 size="sm"
-                classNames={{ inputWrapper: 'h-10 min-h-10' }}
+                classNames={{ inputWrapper: 'h-10 min-h-10 rounded-xl border border-default-200 bg-[#181818] shadow-none data-[hover=true]:bg-[#181818] group-data-[focus=true]:bg-[#181818]', input: 'text-foreground placeholder:text-foreground-500' }}
                 className="w-full"
               />
             </div>
@@ -276,7 +353,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                 onChange={(e) => setSortBy(e.target.value as 'updated' | 'created' | 'name')}
                 className="w-40"
                 size="sm"
-                classNames={{ trigger: 'h-10 min-h-10', label: 'text-xs' }}
+                classNames={{ trigger: 'h-10 min-h-10 rounded-xl border border-default-200 bg-[#181818] shadow-none data-[hover=true]:bg-[#181818]', label: 'text-xs text-foreground-500', value: 'text-foreground', popoverContent: 'rounded-xl border border-default-200 bg-[#111111] shadow-xl', listbox: 'bg-[#111111] text-foreground', listboxWrapper: 'bg-[#111111]' }}
               >
                 <SelectItem key="updated" value="updated">Last updated</SelectItem>
                 <SelectItem key="created" value="created">Created date</SelectItem>
@@ -289,7 +366,13 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                 aria-label={sortOrder === 'asc' ? 'Sort descending' : 'Sort ascending'}
                 className="h-10 min-w-10 px-0"
               >
-                {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                <motion.span
+                  animate={{ rotate: sortOrder === 'asc' ? 180 : 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="inline-flex"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </motion.span>
               </Button>
               
               <div className="ml-auto flex gap-2">
@@ -327,8 +410,8 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
             </div>
           )}
 
-          <div className="bg-[#111111] rounded-lg shadow-medium overflow-hidden">
-            <div className="border-b border-divider">
+          <div className="bg-[#111111] rounded-2xl shadow-medium overflow-visible">
+            <div className="overflow-hidden rounded-t-2xl border-b border-divider">
               <div className="px-6 py-3 flex items-center bg-[#181818]">
                 <div className="mr-4 flex h-5 w-5 items-center">
                   <Checkbox
@@ -390,7 +473,10 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                             rel="noreferrer"
                             className="text-sm font-semibold text-white hover:text-gray-300 hover:underline"
                           >
-                            {repo.name}
+                            <span className="inline-flex items-center gap-1.5">
+                              {repo.name}
+                              <ExternalLink className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
+                            </span>
                           </a>
                           {repo.description && (
                             <p className="text-sm text-foreground-500 mt-1 line-clamp-2">
@@ -403,8 +489,28 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                             <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
                           </div>
                         </div>
-                        <div className="hidden h-9 items-center text-sm text-foreground-500 sm:flex">
-                          {new Date(repo.updated_at).toLocaleDateString()}
+                        <div className="relative hidden h-9 items-center text-sm text-foreground-500 sm:flex">
+                          <div className="group relative">
+                            <span className="inline-flex cursor-help items-center gap-1.5" tabIndex={0}>
+                              {new Date(repo.updated_at).toLocaleDateString()}
+                              <CalendarDays className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
+                            </span>
+                            <div className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden w-56 rounded-xl border border-default-200 bg-[#111111] p-3 text-foreground shadow-xl group-hover:block group-focus-within:block">
+                              <div className="mb-3 flex items-center justify-between text-xs font-medium text-foreground">
+                                <span>{new Date(repo.updated_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
+                                <CalendarDays className="h-4 w-4 text-foreground-500" aria-hidden="true" />
+                              </div>
+                              <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-foreground-500">
+                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => <span key={day}>{day}</span>)}
+                              </div>
+                              <div className="mt-1 grid grid-cols-7 gap-1 text-center text-xs">
+                                {getCalendarDays(new Date(repo.updated_at)).map((day, index) => {
+                                  const updatedDay = new Date(repo.updated_at).getDate();
+                                  return <span key={`${repo.id}-${index}`} className={`flex h-6 items-center justify-center rounded-md ${day === updatedDay ? 'bg-white text-black font-semibold' : 'text-foreground-500'}`}>{day ?? ''}</span>;
+                                })}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         <div className="hidden h-9 items-center sm:flex">
                           <span className="inline-flex items-center gap-1 rounded-full border border-gray-600 px-2.5 py-0.5 text-xs font-medium text-gray-300">
@@ -413,15 +519,15 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                           </span>
                         </div>
                         <div className="hidden h-9 items-center sm:flex">
-                          <Button
-                            variant="secondary"
+                          <button
+                            type="button"
                             onClick={() => openRepositoryManager(repo)}
                             aria-label={`Manage ${repo.name}`}
                             title={`Manage ${repo.name}`}
-                            className="h-9 min-w-9 w-9 px-0"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground-500 transition-colors hover:bg-[#181818] hover:text-foreground focus:outline-none focus:ring-1 focus:ring-default-300"
                           >
                             <Settings2 className="h-4 w-4" />
-                          </Button>
+                          </button>
                         </div>
                       </div>
                     </div>

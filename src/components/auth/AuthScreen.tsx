@@ -5,8 +5,13 @@ import { loginWithToken } from '../../services/githubService';
 import { toast } from '../ui/useToast';
 import { InteractiveGridPattern } from '../ui/InteractiveGridPattern';
 import { Highlighter } from '../ui/Highlighter';
+import { LineShadowText } from '../ui/line-shadow-text';
 
-const AuthScreen: React.FC = () => {
+interface AuthScreenProps {
+  onPreview: () => void;
+}
+
+const AuthScreen: React.FC<AuthScreenProps> = ({ onPreview }) => {
   const [token, setToken] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -34,7 +39,7 @@ const AuthScreen: React.FC = () => {
       <div className="auth-layout relative z-10 mx-auto w-full max-w-6xl">
         <section className="max-w-xl">
           <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Repository management</p>
-          <h1 className="text-5xl font-bold leading-tight text-white sm:text-7xl">By Rabity</h1>
+          <h1 className="text-5xl font-bold leading-none tracking-tighter text-white sm:text-7xl">By <LineShadowText className="font-black italic" shadowColor="#ffffff">Rabity</LineShadowText></h1>
           <p className="mt-5 text-lg leading-8 text-gray-400">Safely manage and permanently delete GitHub repositories from one place.</p>
           <p className="mt-4 text-sm text-gray-500"><Highlighter action="underline" color="#ffffff">Repository deletion cannot be undone.</Highlighter>{' '}</p>
         </section>
@@ -82,6 +87,9 @@ const AuthScreen: React.FC = () => {
           </form>
 
           <p className="mt-4 text-center text-xs text-gray-500">Your token is used only to sign in and is kept in an encrypted session.</p>
+          <button type="button" onClick={onPreview} className="mt-5 w-full text-xs text-gray-500 underline-offset-4 hover:text-gray-300 hover:underline">
+            Preview with sample repositories
+          </button>
         </section>
       </div>
     </main>

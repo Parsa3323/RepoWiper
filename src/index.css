@@ -28,6 +28,29 @@ body {
   justify-self: end;
 }
 
+.line-shadow-text::after {
+  position: absolute;
+  top: 0.04em;
+  left: 0.04em;
+  z-index: -1;
+  content: attr(data-text);
+  background: linear-gradient(45deg, transparent 45%, var(--shadow-color) 45%, var(--shadow-color) 55%, transparent 0);
+  background-size: 0.06em 0.06em;
+  background-clip: text;
+  color: transparent;
+  animation: line-shadow 15s linear infinite;
+}
+
+@keyframes line-shadow {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 100% -100%;
+  }
+}
+
 @media (max-width: 767px) {
   .auth-layout {
     grid-template-columns: minmax(0, 1fr);
