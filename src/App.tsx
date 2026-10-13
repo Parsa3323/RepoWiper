@@ -6,14 +6,16 @@ import { Toaster } from './components/ui/Toaster';
 import { getSession, logout, User } from './services/githubService';
 import { toast } from './components/ui/useToast';
 import { Spinner } from '@nextui-org/react';
+import { previewUser } from './services/mockData';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPreview, setIsPreview] = useState(false);
 
   const handleLogout = useCallback(async () => {
-    await logout().catch(() => undefined);
     setUser(null);
+    await logout().catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -37,7 +39,9 @@ const App: React.FC = () => {
             <Spinner color="default" size="lg" />
             <span>Loading...</span>
           </div>
-        ) : user ? <RepositoryManager user={user} onLogout={handleLogout} /> : <AuthScreen />}
+        ) : user ? <RepositoryManager user={user} onLogout={handleLogout} /> : isPreview ? (
+          <RepositoryManager user={previewUser} isPreview onLogout={() => setIsPreview(false)} />
+        ) : <AuthScreen onPreview={() => setIsPreview(true)} />}
         <Toaster />
       </div>
     </ThemeProvider>

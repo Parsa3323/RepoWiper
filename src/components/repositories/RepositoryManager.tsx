@@ -1,5 +1,5 @@
-import React, { useCallback, useState, useEffect } from 'react';
-import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, RefreshCw, Settings2, X, Lock, Unlock, ExternalLink, CalendarDays } from 'lucide-react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
+import { Github, LogOut, Search, Trash2, AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, RefreshCw, Settings2, X, Lock, Unlock, ExternalLink, CalendarDays, MoreHorizontal, ListChecks } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '../ui/useToast';
 import ConfirmationModal from '../ui/ConfirmationModal';
@@ -7,12 +7,15 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { LightRays } from '../ui/light-rays';
 import { LineShadowText } from '../ui/line-shadow-text';
+import { Dock, DockIcon } from '../ui/dock';
 import { Repository, fetchUserRepositories, deleteRepository, updateRepository, User } from '../../services/githubService';
+import { previewRepositories } from '../../services/mockData';
 import { Checkbox, Select, SelectItem, Input, Spinner } from '@nextui-org/react';
 
 interface RepositoryManagerProps {
   user: User;
   onLogout: () => void;
+  isPreview?: boolean;
 }
 
 const getCalendarDays = (date: Date) => {
@@ -21,7 +24,7 @@ const getCalendarDays = (date: Date) => {
   return Array.from({ length: firstDay + daysInMonth }, (_, index) => index < firstDay ? null : index - firstDay + 1);
 };
 
-const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout }) => {
+const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, isPreview = false }) => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [filteredRepositories, setFilteredRepositories] = useState<Repository[]>([]);
   const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
@@ -39,14 +42,37 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
   const [managedVisibility, setManagedVisibility] = useState<'public' | 'private'>('public');
   const [isSavingRepository, setIsSavingRepository] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ repository: Repository; x: number; y: number } | null>(null);
+  const [mobileRepositoryMenu, setMobileRepositoryMenu] = useState<Repository | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileDockVisible, setIsMobileDockVisible] = useState(true);
+  const dockHideTimer = useRef<number | null>(null);
+
+  const revealMobileDock = useCallback(() => {
+    setIsMobileDockVisible(true);
+    if (dockHideTimer.current !== null) window.clearTimeout(dockHideTimer.current);
+    if (selectedRepos.length > 0) {
+      dockHideTimer.current = null;
+      return;
+    }
+    dockHideTimer.current = window.setTimeout(() => setIsMobileDockVisible(false), 4000);
+  }, [selectedRepos.length]);
+
+  const handleLogout = () => {
+    setIsProfileOpen(false);
+    onLogout();
+  };
 
   const fetchRepositories = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const result = await fetchUserRepositories();
-      setRepositories(result.repositories);
+      if (isPreview) {
+        setRepositories(previewRepositories);
+      } else {
+        const result = await fetchUserRepositories();
+        setRepositories(result.repositories);
+      }
       
       setSelectedRepos([]);
     } catch (err) {
@@ -59,11 +85,23 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isPreview]);
 
   useEffect(() => {
     fetchRepositories();
   }, [fetchRepositories]);
+
+  useEffect(() => {
+    revealMobileDock();
+    return () => {
+      if (dockHideTimer.current !== null) window.clearTimeout(dockHideTimer.current);
+    };
+  }, [revealMobileDock, selectedRepos]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', revealMobileDock, { passive: true });
+    return () => window.removeEventListener('scroll', revealMobileDock);
+  }, [revealMobileDock]);
 
   useEffect(() => {
     if (!contextMenu) return undefined;
@@ -88,6 +126,11 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
 
   const changeRepositoryVisibility = async (repository: Repository, visibility: 'public' | 'private') => {
     try {
+      if (isPreview) {
+        setRepositories((current) => current.map((item) => item.id === repository.id ? { ...item, visibility, private: visibility === 'private' } : item));
+        toast({ title: 'Preview updated', description: `${repository.name} is now ${visibility}.` });
+        return;
+      }
       const updated = await updateRepository(user.login, repository.name, { name: repository.name, visibility });
       setRepositories((current) => current.map((item) => item.id === updated.id ? updated : item));
       toast({ title: 'Repository updated', description: `${updated.name} is now ${visibility}.` });
@@ -98,11 +141,17 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
 
   const handleRepositoryContextMenu = (event: React.MouseEvent, repository: Repository) => {
     event.preventDefault();
+    if (window.innerWidth < 768) return;
     setContextMenu({
       repository,
       x: Math.min(event.clientX, window.innerWidth - 240),
       y: Math.min(event.clientY, window.innerHeight - 150),
     });
+  };
+
+  const openMobileRepositoryMenu = (event: React.MouseEvent, repository: Repository) => {
+    event.stopPropagation();
+    setMobileRepositoryMenu(repository);
   };
 
   const handleContextDelete = () => {
@@ -132,6 +181,19 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
     if (!managedRepository || !managedName.trim()) return;
     try {
       setIsSavingRepository(true);
+      if (isPreview) {
+        const updatedName = managedName.trim();
+        setRepositories((current) => current.map((repository) => repository.id === managedRepository.id ? {
+          ...repository,
+          name: updatedName,
+          full_name: `${user.login}/${updatedName}`,
+          visibility: managedVisibility,
+          private: managedVisibility === 'private',
+        } : repository));
+        setManagedRepository(null);
+        toast({ title: 'Preview updated', description: `${updatedName} was updated successfully.` });
+        return;
+      }
       const updated = await updateRepository(user.login, managedRepository.name, {
         name: managedName.trim(),
         visibility: managedVisibility,
@@ -187,6 +249,13 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
   const handleDeleteRepositories = async () => {
     try {
       setIsDeleting(true);
+      if (isPreview) {
+        setRepositories((prev) => prev.filter((repo) => !selectedRepos.includes(repo.name)));
+        const deletedCount = selectedRepos.length;
+        setSelectedRepos([]);
+        toast({ title: 'Preview updated', description: `Simulated deletion of ${deletedCount} repositories.` });
+        return;
+      }
       const results = await Promise.allSettled(
         selectedRepos.map((repoName) => 
           deleteRepository(user.login, repoName)
@@ -235,7 +304,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
         <LightRays color="rgba(255, 248, 220, 0.22)" />
         <header className="relative z-20 bg-[#111111] shadow-medium border-b border-divider">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-row items-center justify-between gap-4">
               <div className="flex items-center">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Repository Wiper</p>
@@ -248,7 +317,8 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                   <div className="group relative">
                     <button
                       type="button"
-                      className="flex items-center gap-2 rounded-xl px-2 py-1 text-left text-sm text-foreground-500 transition-colors hover:bg-[#181818] hover:text-foreground focus:outline-none focus:ring-1 focus:ring-default-300"
+                      onClick={() => setIsProfileOpen((open) => !open)}
+                      className="flex h-9 w-9 items-center justify-center gap-2 rounded-xl p-1 text-left text-sm text-foreground-500 transition-colors hover:bg-[#181818] hover:text-foreground focus:outline-none focus:ring-1 focus:ring-default-300 md:h-auto md:w-auto md:justify-start md:px-2 md:py-1"
                       aria-label={`View profile for ${user.login}`}
                     >
                       {user.avatar_url ? (
@@ -258,9 +328,9 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                           {user.login.slice(0, 1).toUpperCase()}
                         </span>
                       )}
-                      <span className="hidden sm:inline">Signed in as <span className="font-medium text-foreground">{user.login}</span></span>
+                      <span className="hidden md:inline">Signed in as <span className="font-medium text-foreground">{user.login}</span></span>
                     </button>
-                    <div className="absolute left-1/2 top-full z-30 hidden w-64 -translate-x-1/2 pt-2 group-hover:block group-focus-within:block">
+                    <div className={`absolute right-0 top-full z-30 w-64 max-w-[calc(100vw-2rem)] pt-2 md:left-1/2 md:right-auto md:-translate-x-1/2 ${isProfileOpen ? '!block' : 'hidden'} md:group-hover:block md:group-focus-within:block`}>
                       <div className="rounded-2xl border border-default-200 bg-[#111111] p-4 text-foreground shadow-xl">
                         <div className="flex items-center gap-3">
                           {user.avatar_url ? (
@@ -284,14 +354,29 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                         >
                           View profile
                         </Button>
+                        <div className="md:hidden">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="mt-2 w-full"
+                            leftIcon={<LogOut className="h-4 w-4" />}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleLogout();
+                            }}
+                          >
+                            Logout
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
                 <Button
                   variant="secondary"
-                  onClick={onLogout}
+                  onClick={handleLogout}
                   leftIcon={<LogOut className="h-4 w-4" />}
+                  className="hidden md:inline-flex"
                 >
                   Logout
                 </Button>
@@ -320,7 +405,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                 label="Sort by"
                 selectedKeys={[sortBy]}
                 onChange={(e) => setSortBy(e.target.value as 'updated' | 'created' | 'name')}
-                className="w-40"
+                className="hidden w-40 md:block"
                 size="sm"
                 classNames={{ trigger: 'h-10 min-h-10 rounded-xl border border-default-200 bg-[#181818] shadow-none data-[hover=true]:bg-[#181818]', label: 'text-xs text-foreground-500', value: 'text-foreground', popoverContent: 'rounded-xl border border-default-200 bg-[#111111] shadow-xl', listbox: 'bg-[#111111] text-foreground', listboxWrapper: 'bg-[#111111]' }}
               >
@@ -333,7 +418,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                 variant="secondary"
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                 aria-label={sortOrder === 'asc' ? 'Sort descending' : 'Sort ascending'}
-                className="h-10 min-w-10 px-0"
+                className="hidden h-10 min-w-10 px-0 md:flex"
               >
                 <motion.span
                   animate={{ rotate: sortOrder === 'asc' ? 180 : 0 }}
@@ -344,7 +429,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                 </motion.span>
               </Button>
               
-              <div className="ml-auto flex gap-2">
+              <div className="ml-auto hidden gap-2 md:flex">
                 <Button
                   variant="secondary"
                   onClick={fetchRepositories}
@@ -365,6 +450,33 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                 </Button>
               </div>
             </div>
+          </div>
+
+          <div className={`fixed bottom-4 left-1/2 z-30 -translate-x-1/2 transition-all duration-300 md:hidden ${isMobileDockVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}>
+            <Dock iconSize={42} iconMagnification={58}>
+              <DockIcon>
+                <button type="button" onClick={fetchRepositories} aria-label="Refresh repositories" title="Refresh repositories" className="flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424]">
+                  <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </DockIcon>
+              <DockIcon>
+                <button type="button" onClick={toggleSelectAll} disabled={paginatedRepositories.length === 0} aria-label="Select all repositories" title="Select all repositories" className="flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424] disabled:opacity-40">
+                  <ListChecks className="h-5 w-5" />
+                </button>
+              </DockIcon>
+              <DockIcon>
+                <button type="button" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} aria-label="Change sort direction" title="Change sort direction" className="flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424]">
+                  <motion.span animate={{ rotate: sortOrder === 'asc' ? 180 : 0 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="inline-flex">
+                    <ChevronDown className="h-5 w-5" />
+                  </motion.span>
+                </button>
+              </DockIcon>
+              <DockIcon>
+                <button type="button" onClick={() => setShowConfirmation(true)} disabled={selectedRepos.length === 0} aria-label="Delete selected repositories" title="Delete selected repositories" className="flex h-full w-full items-center justify-center rounded-xl text-danger transition-colors hover:bg-danger-50 disabled:opacity-40">
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              </DockIcon>
+            </Dock>
           </div>
 
           {error && (
@@ -435,28 +547,33 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                         />
                       </div>
                       <div className="grid flex-1 grid-cols-1 items-center gap-x-8 gap-y-3 pr-8 sm:grid-cols-[minmax(0,1fr)_12rem_9rem_2.25rem]">
-                        <div>
-                          <a 
+                        <div className="relative">
+                          <div className="pr-10">
+                            <a 
                             href={repo.html_url} 
                             target="_blank" 
                             rel="noreferrer"
                             className="text-sm font-semibold text-white hover:text-gray-300 hover:underline"
-                          >
-                            <span className="inline-flex items-center gap-1.5">
-                              {repo.name}
-                              <ExternalLink className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
-                            </span>
-                          </a>
-                          {repo.description && (
-                            <p className="text-sm text-foreground-500 mt-1 line-clamp-2">
-                              {repo.description}
-                            </p>
-                          )}
-                          <div className="mt-1 sm:hidden flex items-center text-xs text-foreground-500">
-                            <span className="capitalize">{repo.visibility}</span>
-                            <span className="mx-1">•</span>
-                            <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
+                            >
+                              <span className="inline-flex items-center gap-1.5">
+                                {repo.name}
+                                <ExternalLink className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
+                              </span>
+                            </a>
+                            {repo.description && (
+                              <p className="text-sm text-foreground-500 mt-1 line-clamp-2">
+                                {repo.description}
+                              </p>
+                            )}
+                            <div className="mt-1 sm:hidden flex items-center text-xs text-foreground-500">
+                              <span className="capitalize">{repo.visibility}</span>
+                              <span className="mx-1">•</span>
+                              <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
+                            </div>
                           </div>
+                          <button type="button" onClick={(event) => openMobileRepositoryMenu(event, repo)} aria-label={`Open actions for ${repo.name}`} title={`Open actions for ${repo.name}`} className="absolute right-0 top-0 inline-flex h-8 w-8 items-center justify-center rounded-xl text-foreground-500 transition-colors hover:bg-[#181818] hover:text-foreground md:hidden">
+                            <MoreHorizontal className="h-5 w-5" />
+                          </button>
                         </div>
                         <div className="relative hidden h-9 items-center text-sm text-foreground-500 sm:flex">
                           <div className="group relative">
@@ -506,7 +623,8 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
             )}
 
             {!isLoading && totalPages > 1 && (
-              <div className="px-6 py-3 flex items-center justify-between border-t border-divider bg-[#181818]">
+              <>
+                <div className="hidden items-center justify-between border-t border-divider bg-[#181818] px-6 py-3 md:flex">
                 <div className="text-sm text-foreground-500">
                   Showing {(currentPage - 1) * pageSize + 1}-
                   {Math.min(currentPage * pageSize, filteredRepositories.length)} of {filteredRepositories.length}
@@ -525,12 +643,32 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
                     leftIcon={<ChevronRight className="h-4 w-4" />}
                   />
                 </div>
-              </div>
+                </div>
+                <div className="flex items-center justify-between border-t border-divider bg-[#181818] px-4 py-3 md:hidden">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    aria-label="Previous page"
+                    leftIcon={<ChevronLeft className="h-4 w-4" />}
+                    className="h-9 min-w-9 px-0"
+                  />
+                  <span className="text-sm text-foreground-500">Page {currentPage} of {totalPages}</span>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    aria-label="Next page"
+                    leftIcon={<ChevronRight className="h-4 w-4" />}
+                    className="h-9 min-w-9 px-0"
+                  />
+                </div>
+              </>
             )}
           </div>
         </main>
         
-        <footer className="relative z-10 bg-[#111111] border-t border-divider">
+        <footer className="relative z-0 bg-[#111111] border-t border-divider md:z-10">
           <div className="container mx-auto px-4 py-4 text-center text-sm text-foreground-500">
             © {new Date().getFullYear()} GitHub Repository Wiper by Parsa3323. All rights reserved.
           </div>
@@ -570,27 +708,94 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
         </div>
       </Modal>
 
+      <Modal isOpen={Boolean(mobileRepositoryMenu)} onClose={() => setMobileRepositoryMenu(null)} className="max-w-sm p-0">
+        {mobileRepositoryMenu && (
+          <>
+            <div className="p-6">
+              <button type="button" aria-label="Close repository details" onClick={() => setMobileRepositoryMenu(null)} className="absolute right-4 top-4 text-foreground-500 hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+              <div className="pr-8">
+                <a href={mobileRepositoryMenu.html_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-lg font-semibold text-foreground hover:text-gray-300 hover:underline">
+                  {mobileRepositoryMenu.name}
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                </a>
+                {mobileRepositoryMenu.description && <p className="mt-2 text-sm text-foreground-500">{mobileRepositoryMenu.description}</p>}
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-default-200 bg-[#181818] p-3">
+                  <p className="text-xs text-foreground-500">Last updated</p>
+                  <p className="mt-1 text-sm text-foreground">{new Date(mobileRepositoryMenu.updated_at).toLocaleDateString()}</p>
+                </div>
+                <div className="rounded-xl border border-default-200 bg-[#181818] p-3">
+                  <p className="text-xs text-foreground-500">Visibility</p>
+                  <p className="mt-1 inline-flex items-center gap-1 text-sm capitalize text-foreground">
+                    {mobileRepositoryMenu.visibility === 'private' ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
+                    {mobileRepositoryMenu.visibility}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 border-t border-default-200 bg-[#181818] p-4">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  openRepositoryManager(mobileRepositoryMenu);
+                  setMobileRepositoryMenu(null);
+                }}
+                leftIcon={<Settings2 className="h-4 w-4" />}
+              >
+                Manage
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const repository = mobileRepositoryMenu;
+                  setMobileRepositoryMenu(null);
+                  void changeRepositoryVisibility(repository, repository.visibility === 'private' ? 'public' : 'private');
+                }}
+                leftIcon={mobileRepositoryMenu.visibility === 'private' ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+              >
+                {mobileRepositoryMenu.visibility === 'private' ? 'Make public' : 'Make private'}
+              </Button>
+              <Button
+                variant="danger"
+                className="col-span-2"
+                onClick={() => {
+                  setSelectedRepos([mobileRepositoryMenu.name]);
+                  setMobileRepositoryMenu(null);
+                  setShowConfirmation(true);
+                }}
+                leftIcon={<Trash2 className="h-4 w-4" />}
+              >
+                Delete repository
+              </Button>
+            </div>
+          </>
+        )}
+      </Modal>
+
       {contextMenu && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
-          className="fixed z-50 w-56 overflow-hidden rounded-xl border border-default-200 bg-[#111111] p-1.5 shadow-xl"
+          className="fixed z-50 hidden w-56 overflow-hidden rounded-2xl border border-default-200 bg-[#111111] p-2 shadow-xl md:block"
           style={{ left: contextMenu.x, top: contextMenu.y, transformOrigin: 'top left' }}
           onClick={(event) => event.stopPropagation()}
           onContextMenu={(event) => event.preventDefault()}
         >
           <p className="truncate px-3 py-2 text-xs text-foreground-500">{contextMenu.repository.name}</p>
           <div className="space-y-1">
-            <button type="button" onClick={handleContextRename} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-[#181818]">
+            <button type="button" onClick={handleContextRename} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-[#181818]">
               <Settings2 className="h-4 w-4" />
               Rename repository
             </button>
-            <button type="button" onClick={handleContextVisibility} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-[#181818]">
+            <button type="button" onClick={handleContextVisibility} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-[#181818]">
               {contextMenu.repository.visibility === 'private' ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
               Make {contextMenu.repository.visibility === 'private' ? 'public' : 'private'}
             </button>
-            <button type="button" onClick={handleContextDelete} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-danger transition-colors hover:bg-danger-50">
+            <button type="button" onClick={handleContextDelete} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-danger transition-colors hover:bg-danger-50">
               <Trash2 className="h-4 w-4" />
               Delete repository
             </button>

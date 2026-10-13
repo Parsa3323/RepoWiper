@@ -7,8 +7,8 @@ export const Toaster: React.FC = () => {
   const { toasts, removeToast } = toastState();
 
   return (
-    <div className="fixed bottom-0 right-0 p-4 space-y-4 z-50 max-w-md w-full">
-      <AnimatedList className="space-y-4">
+    <div className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 sm:bottom-0 sm:left-auto sm:right-0 sm:top-auto sm:w-full sm:translate-x-0 sm:p-4">
+      <AnimatedList className="space-y-2 sm:space-y-4">
         {toasts.map((toast) => <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />)}
       </AnimatedList>
     </div>
@@ -30,23 +30,23 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onClose }) => {
   }, [toast, onClose]);
 
   const icon = toast.variant === 'destructive' ? (
-    <AlertCircle className="h-5 w-5 text-red-500" />
+    <AlertCircle className="h-4 w-4 text-red-500 sm:h-5 sm:w-5" />
   ) : (
-    <CheckCircle className="h-5 w-5 text-emerald-500" />
+    <CheckCircle className="h-4 w-4 text-emerald-500 sm:h-5 sm:w-5" />
   );
 
   return (
-    <div className={`rounded-lg border bg-[#111111] shadow-lg ${toast.variant === 'destructive' ? 'border-red-800' : 'border-gray-700'}`}>
-      <div className="flex items-start p-4">
-        <div className="mr-3 flex-shrink-0">
+    <div className={`rounded-full border bg-[#111111] shadow-lg sm:rounded-2xl ${toast.variant === 'destructive' ? 'border-red-800' : 'border-gray-700'}`}>
+      <div className="flex items-center px-4 py-2.5 sm:items-start sm:p-4">
+        <div className="mr-2 flex-shrink-0 sm:mr-3">
           {icon}
         </div>
         <div className="flex-1">
-          {toast.title && <h3 className="text-sm font-medium text-white">{toast.title}</h3>}
-          {toast.description && <div className="mt-1 text-sm text-gray-400">{toast.description}</div>}
+          {toast.title && <h3 className="truncate text-xs font-medium text-white sm:text-sm">{toast.title}</h3>}
+          {toast.description && <div className="mt-1 hidden text-sm text-gray-400 sm:block">{toast.description}</div>}
         </div>
-        <button type="button" className="ml-4 flex-shrink-0 text-gray-500 hover:text-gray-300 focus:outline-none" onClick={onClose}>
-          <X className="h-4 w-4" />
+        <button type="button" className="ml-3 flex-shrink-0 text-gray-500 hover:text-gray-300 focus:outline-none sm:ml-4" onClick={onClose}>
+          <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </button>
       </div>
     </div>
