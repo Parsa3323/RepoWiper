@@ -318,7 +318,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, i
                     <button
                       type="button"
                       onClick={() => setIsProfileOpen((open) => !open)}
-                      className="flex h-9 w-9 items-center justify-center gap-2 rounded-xl p-1 text-left text-sm text-foreground-500 transition-colors hover:bg-[#181818] hover:text-foreground focus:outline-none focus:ring-1 focus:ring-default-300 md:h-auto md:w-auto md:justify-start md:px-2 md:py-1"
+                      className="touch-manipulation flex h-9 w-9 items-center justify-center gap-2 rounded-xl p-1 text-left text-sm text-foreground-500 transition-colors hover:bg-[#181818] hover:text-foreground focus:outline-none focus:ring-1 focus:ring-default-300 md:h-auto md:w-auto md:justify-start md:px-2 md:py-1"
                       aria-label={`View profile for ${user.login}`}
                     >
                       {user.avatar_url ? (
@@ -330,7 +330,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, i
                       )}
                       <span className="hidden md:inline">Signed in as <span className="font-medium text-foreground">{user.login}</span></span>
                     </button>
-                    <div className={`absolute right-0 top-full z-30 w-64 max-w-[calc(100vw-2rem)] pt-2 md:left-1/2 md:right-auto md:-translate-x-1/2 ${isProfileOpen ? '!block' : 'hidden'} md:group-hover:block md:group-focus-within:block`}>
+                    <div className={`pointer-events-auto absolute right-0 top-full z-40 w-64 max-w-[calc(100vw-2rem)] pt-2 md:left-1/2 md:right-auto md:-translate-x-1/2 ${isProfileOpen ? '!block' : 'hidden'} md:group-hover:block md:group-focus-within:block`}>
                       <div className="rounded-2xl border border-default-200 bg-[#111111] p-4 text-foreground shadow-xl">
                         <div className="flex items-center gap-3">
                           {user.avatar_url ? (
@@ -452,27 +452,27 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, i
             </div>
           </div>
 
-          <div className={`fixed bottom-4 left-1/2 z-30 -translate-x-1/2 transition-all duration-300 md:hidden ${isMobileDockVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}>
+          <div className={`pointer-events-auto fixed bottom-4 left-1/2 z-30 -translate-x-1/2 transition-all duration-300 md:hidden ${isMobileDockVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}>
             <Dock iconSize={42} iconMagnification={58}>
               <DockIcon>
-                <button type="button" onClick={fetchRepositories} aria-label="Refresh repositories" title="Refresh repositories" className="flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424]">
+                <button type="button" onClick={fetchRepositories} aria-label="Refresh repositories" title="Refresh repositories" className="touch-manipulation flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424]">
                   <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
                 </button>
               </DockIcon>
               <DockIcon>
-                <button type="button" onClick={toggleSelectAll} disabled={paginatedRepositories.length === 0} aria-label="Select all repositories" title="Select all repositories" className="flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424] disabled:opacity-40">
+                <button type="button" onClick={toggleSelectAll} disabled={paginatedRepositories.length === 0} aria-label="Select all repositories" title="Select all repositories" className="touch-manipulation flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424] disabled:opacity-40">
                   <ListChecks className="h-5 w-5" />
                 </button>
               </DockIcon>
               <DockIcon>
-                <button type="button" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} aria-label="Change sort direction" title="Change sort direction" className="flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424]">
+                <button type="button" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} aria-label="Change sort direction" title="Change sort direction" className="touch-manipulation flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424]">
                   <motion.span animate={{ rotate: sortOrder === 'asc' ? 180 : 0 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="inline-flex">
                     <ChevronDown className="h-5 w-5" />
                   </motion.span>
                 </button>
               </DockIcon>
               <DockIcon>
-                <button type="button" onClick={() => setShowConfirmation(true)} disabled={selectedRepos.length === 0} aria-label="Delete selected repositories" title="Delete selected repositories" className="flex h-full w-full items-center justify-center rounded-xl text-danger transition-colors hover:bg-danger-50 disabled:opacity-40">
+                <button type="button" onClick={() => setShowConfirmation(true)} disabled={selectedRepos.length === 0} aria-label="Delete selected repositories" title="Delete selected repositories" className="touch-manipulation flex h-full w-full items-center justify-center rounded-xl text-danger transition-colors hover:bg-danger-50 disabled:opacity-40">
                   <Trash2 className="h-5 w-5" />
                 </button>
               </DockIcon>
@@ -571,7 +571,7 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout, i
                               <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
                             </div>
                           </div>
-                          <button type="button" onClick={(event) => openMobileRepositoryMenu(event, repo)} aria-label={`Open actions for ${repo.name}`} title={`Open actions for ${repo.name}`} className="absolute right-0 top-0 inline-flex h-8 w-8 items-center justify-center rounded-xl text-foreground-500 transition-colors hover:bg-[#181818] hover:text-foreground md:hidden">
+                          <button type="button" onClick={(event) => openMobileRepositoryMenu(event, repo)} aria-label={`Open actions for ${repo.name}`} title={`Open actions for ${repo.name}`} className="touch-manipulation absolute right-0 top-0 inline-flex h-8 w-8 items-center justify-center rounded-xl text-foreground-500 transition-colors hover:bg-[#181818] hover:text-foreground md:hidden">
                             <MoreHorizontal className="h-5 w-5" />
                           </button>
                         </div>

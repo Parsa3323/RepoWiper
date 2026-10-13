@@ -7,7 +7,7 @@ export const Toaster: React.FC = () => {
   const { toasts, removeToast } = toastState();
 
   return (
-    <div className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 sm:bottom-0 sm:left-auto sm:right-0 sm:top-auto sm:w-full sm:translate-x-0 sm:p-4">
+    <div className="pointer-events-none fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 sm:bottom-0 sm:left-auto sm:right-0 sm:top-auto sm:w-full sm:translate-x-0 sm:p-4">
       <AnimatedList className="space-y-2 sm:space-y-4">
         {toasts.map((toast) => <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />)}
       </AnimatedList>
@@ -36,7 +36,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onClose }) => {
   );
 
   return (
-    <div className={`rounded-full border bg-[#111111] shadow-lg sm:rounded-2xl ${toast.variant === 'destructive' ? 'border-red-800' : 'border-gray-700'}`}>
+    <div className={`pointer-events-auto rounded-full border bg-[#111111] shadow-lg sm:rounded-2xl ${toast.variant === 'destructive' ? 'border-red-800' : 'border-gray-700'}`}>
       <div className="flex items-center px-4 py-2.5 sm:items-start sm:p-4">
         <div className="mr-2 flex-shrink-0 sm:mr-3">
           {icon}

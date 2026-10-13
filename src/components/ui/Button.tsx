@@ -49,7 +49,7 @@ const Button: React.FC<ButtonProps> = ({
       isDisabled={disabled}
       startContent={!isLoading && leftIcon}
       endContent={!isLoading && rightIcon}
-      className={`rounded-xl ${className}`}
+      className={`touch-manipulation rounded-xl ${className}`}
       {...props}
     >
       {children}
