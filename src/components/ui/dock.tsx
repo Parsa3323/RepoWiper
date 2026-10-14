@@ -26,11 +26,26 @@ export const Dock: React.FC<DockProps> = ({
   iconDistance = 140,
 }) => {
   const mouseX = useMotionValue(Infinity);
+  const isPressingOption = useRef(false);
+
+  const endPress = () => {
+    isPressingOption.current = false;
+    mouseX.set(Infinity);
+  };
 
   return (
     <motion.div
-      onMouseMove={(event) => mouseX.set(event.pageX)}
-      onMouseLeave={() => mouseX.set(Infinity)}
+      onPointerDown={(event) => {
+        if (!(event.target as HTMLElement).closest('button')) return;
+        isPressingOption.current = true;
+        mouseX.set(event.clientX);
+      }}
+      onPointerMove={(event) => {
+        if (isPressingOption.current) mouseX.set(event.clientX);
+      }}
+      onPointerUp={endPress}
+      onPointerCancel={endPress}
+      onPointerLeave={endPress}
       className={`flex h-[58px] w-max items-center justify-center gap-2 rounded-full border border-default-200 bg-[#111111]/90 p-2 shadow-xl backdrop-blur-md ${className}`}
     >
       {React.Children.map(children, (child) => React.isValidElement<DockIconProps>(child) && child.type === DockIcon
