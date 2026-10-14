@@ -423,24 +423,24 @@ const RepositoryManager: React.FC<RepositoryManagerProps> = ({ user, onLogout })
 
           <div className={`pointer-events-auto fixed bottom-4 left-1/2 z-30 -translate-x-1/2 transition-all duration-300 md:hidden ${isMobileDockVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}>
             <Dock iconSize={42} iconMagnification={58}>
-              <DockIcon>
+              <DockIcon label="Refresh">
                 <button type="button" onClick={fetchRepositories} aria-label="Refresh repositories" title="Refresh repositories" className="touch-manipulation flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424]">
                   <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
                 </button>
               </DockIcon>
-              <DockIcon>
+              <DockIcon label="Select all">
                 <button type="button" onClick={toggleSelectAll} disabled={paginatedRepositories.length === 0} aria-label="Select all repositories" title="Select all repositories" className="touch-manipulation flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424] disabled:opacity-40">
                   <ListChecks className="h-5 w-5" />
                 </button>
               </DockIcon>
-              <DockIcon>
+              <DockIcon label="Change sort">
                 <button type="button" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} aria-label="Change sort direction" title="Change sort direction" className="touch-manipulation flex h-full w-full items-center justify-center rounded-xl text-foreground transition-colors hover:bg-[#242424]">
                   <motion.span animate={{ rotate: sortOrder === 'asc' ? 180 : 0 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="inline-flex">
                     <ChevronDown className="h-5 w-5" />
                   </motion.span>
                 </button>
               </DockIcon>
-              <DockIcon>
+              <DockIcon label="Delete selected">
                 <button type="button" onClick={() => setShowConfirmation(true)} disabled={selectedRepos.length === 0} aria-label="Delete selected repositories" title="Delete selected repositories" className="touch-manipulation flex h-full w-full items-center justify-center rounded-xl text-danger transition-colors hover:bg-danger-50 disabled:opacity-40">
                   <Trash2 className="h-5 w-5" />
                 </button>
